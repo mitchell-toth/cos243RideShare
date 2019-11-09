@@ -484,3 +484,66 @@ Ride.query()
 	})
 	.catch(error => console.error(error));
 */
+
+
+
+
+
+//     RESTful API routes and handlers
+//===========================================
+
+// configure hapi
+const Hapi = require('@hapi/hapi');
+
+const init = async () => {
+	// create a new hapi server
+	const server = Hapi.server({
+		host: 'localhost',
+		port: 3000
+	});
+	
+	// output endpoints at startup
+	await server.register({plugin: require('blipp'), options: {showAuth: true}});
+	
+	// log requests and responses
+	await server.register({plugin: require('hapi-pino'), options: {prettyPrint: true}});
+	
+	// connection routes
+	server.route([
+	
+		// default path
+		{
+			method: 'GET',
+			path: '/',
+			config: {description: 'Default path'},
+			handler: (request,h) => {
+				return 'Hello, Hapi!';
+			}
+		},
+		
+		// get all drivers
+		{
+			method: 'GET',
+			path: '/drivers',
+			config: {description: 'Retrieve all drivers'},
+			handler: async (request, h) => {
+				return await Driver.query()
+					.select('id', 'first_name', 'last_name');
+			}
+		}
+	]);
+	
+	// activate the server
+	await server.start();
+};
+
+
+// catch promises lacking a '.catch'
+process.on('unhandledRejection', err => {
+	console.error(err);
+	process.exit(1);
+});
+
+
+// Go!
+init();
