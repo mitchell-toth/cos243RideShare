@@ -1,0 +1,46 @@
+Mitchell Toth, Drew Anderson
+10/21/19
+
+
+Driver:
+	Create a new driver - POST - /driver - {"first_name": "Bob", "last_name": "Smith", "phone": "111-111-1111"}
+	Read a driver - GET - /driver/:id
+	Read all drivers - GET - /driver
+	Update a driver - PUT - /driver/:id - {"phone": "222-222-2222"}
+
+
+Vehicle:
+	Create a new vehicle - POST - /vehicle - {"make": "Buick", "model": "Regal", "color": "silver", "vehicle_type_id": 1, "capacity": 5, "mpg": 35, "license_state": "OH", "license_text": "MT33"}
+	Read a vehicle - GET - /vehicle/:id
+	Read all vehicles - GET - /vehicle
+	Update a vehicle - PUT - /vehicle/:id - {"license": "8C65E2B"}
+
+
+Passenger:
+	Create a new passenger - POST - /passenger - {"first_name": "John", "last_name": "Williams", "phone": "333-333-3333"}
+	Read a passenger - GET - /passenger/:id
+	Read all passengers - GET - /passenger
+	Update a passenger - PUT - /passenger/:id - {"phone": "444-444-4444"}
+
+
+Ride:
+	Create a new ride - POST - /ride - {"date": 2019-10-22, "time": 12:30:00, "distance": 130.1, "fuel_price": 2.65, "fee": 5.30, "vehicle_id": 1, "from_location_id": 1, "to_location_id": 2}
+	Read a ride - GET - /ride/:id
+	Read all rides - GET - /ride
+	Update a ride - PUT - /ride/:id - {"fuel_price": 3.10}
+
+
+Authorize/deauthorize a driver for a vehicle:
+	Authorize a driver with a vehicle - POST - /authorization - {"driver_id": 1, "vehicle_id": 2}
+	Deauthorize a driver with a vehicle - DELETE - /authorization/:driver_id/:vehicle_id
+
+
+Assign an authorized driver for a ride/revoke such authorization:
+	Assign an authorized driver for a ride - POST - /drivers - {"driver_id": 3, "ride_id": 4}
+	Revoke an authorized driver for a ride - DELETE - /drivers/:driver_id/:ride_id
+
+
+Authorize an existing driver to drive an existing vehicle then create a ride and associate it with the same vehicle:
+	1) Authorize a driver with a vehicle - POST - /authorization - {"driver_id": 1, "vehicle_id": 2}
+	2) Create a new ride with the appropriate vehicle - POST - /ride - {"date": 2019-11-07, "time": 16:10:00, "distance": 56.2, "fuel_price": 2.43, "fee": 5.30, "vehicle_id": 2, "from_location_id": 3, "to_location_id": 5}
+
