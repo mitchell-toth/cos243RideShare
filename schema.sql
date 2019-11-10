@@ -1,6 +1,7 @@
 -- Mitchell Toth, Drew Anderson
 -- COS243
 
+
 create schema public;
 
 comment on schema public is 'standard public schema';
@@ -44,9 +45,7 @@ create table if not exists location
 	address varchar,
 	city varchar,
 	state varchar,
-	zip_code varchar,
-	latitude varchar,
-	longitude varchar
+	zip_code varchar
 );
 
 alter table location owner to mitchell_toth;
@@ -94,14 +93,17 @@ create table if not exists vehicle
 	capacity integer,
 	mpg double precision,
 	license_state varchar,
-	license_text varchar
+	license_text varchar,
+	vehicle_type_explanation varchar
 );
 
 alter table vehicle owner to mitchell_toth;
 
 create table if not exists vehicle_type
 (
-	id serial not null,
+	id serial not null
+		constraint vehicle_type_pk
+			primary key,
 	type varchar
 );
 
@@ -116,5 +118,7 @@ create table if not exists passenger
 );
 
 alter table passenger owner to mitchell_toth;
+
+
 
 

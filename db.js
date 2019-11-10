@@ -524,13 +524,124 @@ const init = async () => {
 		// get all drivers
 		{
 			method: 'GET',
-			path: '/drivers',
+			path: '/driver',
 			config: {description: 'Retrieve all drivers'},
 			handler: async (request, h) => {
-				return await Driver.query()
-					.select('id', 'first_name', 'last_name');
+				let query = Driver.query()
+					.select();
+				// eager joins
+				if (request.query['join']) {
+					let relations = `[${request.query['join'].split('|').join(', ')}]`;
+					query.eager(relations);
+				}
+				return await query;
 			}
-		}
+		},
+		
+		// get all vehicles
+		{
+			method: 'GET',
+			path: '/vehicle',
+			config: {description: 'Retrieve all vehicles'},
+			handler: async (request, h) => {
+				let query = Vehicle.query()
+					.select();
+				// eager joins
+				if (request.query['join']) {
+					let relations = `[${request.query['join'].split('|').join(', ')}]`;
+					query.eager(relations);
+				}
+				return await query;
+			}
+		},
+		
+		// get all vehicle types
+		{
+			method: 'GET',
+			path: '/vehicle_type',
+			config: {description: 'Retrieve all vehicle types'},
+			handler: async (request, h) => {
+				let query = VehicleType.query()
+					.select();
+				// eager joins
+				if (request.query['join']) {
+					let relations = `[${request.query['join'].split('|').join(', ')}]`;
+					query.eager(relations);
+				}
+				return await query;
+			}
+		},
+		
+		// get all rides
+		{
+			method: 'GET',
+			path: '/ride',
+			config: {description: 'Retrieve all rides'},
+			handler: async (request, h) => {
+				let query = Ride.query()
+					.select();
+				// eager joins
+				if (request.query['join']) {
+					let relations = `[${request.query['join'].split('|').join(', ')}]`;
+					query.eager(relations);
+				}
+				return await query;
+			}
+		},
+		
+		// get all passengers
+		{
+			method: 'GET',
+			path: '/passenger',
+			config: {description: 'Retrieve all passengers'},
+			handler: async (request, h) => {
+				let query = Passenger.query()
+					.select();
+				// eager joins
+				if (request.query['join']) {
+					let relations = `[${request.query['join'].split('|').join(', ')}]`;
+					query.eager(relations);
+				}
+				return await query;
+			}
+		},
+		
+		// get all U.S. states and abbreviations
+		{
+			method: 'GET',
+			path: '/state',
+			config: {description: 'Retrieve all U.S. states'},
+			handler: async (request, h) => {
+				let query = State.query()
+					.select();
+				// eager joins
+				if (request.query['join']) {
+					let relations = `[${request.query['join'].split('|').join(', ')}]`;
+					query.eager(relations);
+				}
+				return await query;
+			}
+		},
+		
+		// get all locations
+		{
+			method: 'GET',
+			path: '/location',
+			config: {description: 'Retrieve all locations'},
+			handler: async (request, h) => {
+				let query = Location.query()
+					.select();
+				// eager joins
+				if (request.query['join']) {
+					let relations = `[${request.query['join'].split('|').join(', ')}]`;
+					query.eager(relations);
+				}
+				return await query;
+			}
+		},
+		
+		
+		
 	]);
 	
 	// activate the server
