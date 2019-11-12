@@ -492,8 +492,18 @@ Ride.query()
 //     RESTful API routes and handlers
 //===========================================
 
+function getAndApplyRelations(request, query) {
+	if (request.query['join']) {
+		let relations = `[${request.query['join'].split('|').join(', ')}]`;
+		query.eager(relations);
+	}
+	return query;
+}
+
 // configure hapi
 const Hapi = require('@hapi/hapi');
+
+const Joi = require('joi');
 
 const init = async () => {
 	// create a new hapi server
@@ -529,11 +539,43 @@ const init = async () => {
 			handler: async (request, h) => {
 				let query = Driver.query()
 					.select();
-				// eager joins
-				if (request.query['join']) {
-					let relations = `[${request.query['join'].split('|').join(', ')}]`;
-					query.eager(relations);
+				query = getAndApplyRelations(request, query);
+				return await query;
+			}
+		},
+		
+		// get a specific driver by id
+		{
+			method: 'GET',
+			path: '/driver/{driver_id}',
+			config: {description: 'Retrieve one driver'},
+			handler: async (request, h) => {
+				let query = Driver.query()
+					.select()
+					.where('id', request.params['driver_id'])
+					.first();
+				query = getAndApplyRelations(request, query);
+				return await query;
+			}
+		},
+		
+		// create a driver
+		{
+			method: 'POST',
+			path: '/driver',
+			config: {
+				description: 'Create a new driver',
+				validate: {
+					payload: Joi.object({
+						first_name: Joi.string().required(),
+						last_name: Joi.string().required(),
+						phone: Joi.string()
+					})
 				}
+			},
+			handler: async (request, h) => {
+				let query = Driver.query()
+					.insert(request.payload);
 				return await query;
 			}
 		},
@@ -546,11 +588,22 @@ const init = async () => {
 			handler: async (request, h) => {
 				let query = Vehicle.query()
 					.select();
-				// eager joins
-				if (request.query['join']) {
-					let relations = `[${request.query['join'].split('|').join(', ')}]`;
-					query.eager(relations);
-				}
+				query = getAndApplyRelations(request, query);
+				return await query;
+			}
+		},
+		
+		// get a specific vehicle by id
+		{
+			method: 'GET',
+			path: '/vehicle/{vehicle_id}',
+			config: {description: 'Retrieve one vehicle'},
+			handler: async (request, h) => {
+				let query = Vehicle.query()
+					.select()
+					.where('id', request.params['vehicle_id'])
+					.first();
+				query = getAndApplyRelations(request, query);
 				return await query;
 			}
 		},
@@ -563,11 +616,7 @@ const init = async () => {
 			handler: async (request, h) => {
 				let query = VehicleType.query()
 					.select();
-				// eager joins
-				if (request.query['join']) {
-					let relations = `[${request.query['join'].split('|').join(', ')}]`;
-					query.eager(relations);
-				}
+				query = getAndApplyRelations(request, query);
 				return await query;
 			}
 		},
@@ -580,11 +629,22 @@ const init = async () => {
 			handler: async (request, h) => {
 				let query = Ride.query()
 					.select();
-				// eager joins
-				if (request.query['join']) {
-					let relations = `[${request.query['join'].split('|').join(', ')}]`;
-					query.eager(relations);
-				}
+				query = getAndApplyRelations(request, query);
+				return await query;
+			}
+		},
+		
+		// get a specific ride by id
+		{
+			method: 'GET',
+			path: '/ride/{ride_id}',
+			config: {description: 'Retrieve one ride'},
+			handler: async (request, h) => {
+				let query = Ride.query()
+					.select()
+					.where('id', request.params['ride_id'])
+					.first();
+				query = getAndApplyRelations(request, query);
 				return await query;
 			}
 		},
@@ -597,11 +657,22 @@ const init = async () => {
 			handler: async (request, h) => {
 				let query = Passenger.query()
 					.select();
-				// eager joins
-				if (request.query['join']) {
-					let relations = `[${request.query['join'].split('|').join(', ')}]`;
-					query.eager(relations);
-				}
+				query = getAndApplyRelations(request, query);
+				return await query;
+			}
+		},
+		
+		// get a specific passenger by id
+		{
+			method: 'GET',
+			path: '/passenger/{passenger_id}',
+			config: {description: 'Retrieve one passenger'},
+			handler: async (request, h) => {
+				let query = Passenger.query()
+					.select()
+					.where('id', request.params['passenger_id'])
+					.first();
+				query = getAndApplyRelations(request, query);
 				return await query;
 			}
 		},
@@ -614,11 +685,7 @@ const init = async () => {
 			handler: async (request, h) => {
 				let query = State.query()
 					.select();
-				// eager joins
-				if (request.query['join']) {
-					let relations = `[${request.query['join'].split('|').join(', ')}]`;
-					query.eager(relations);
-				}
+				query = getAndApplyRelations(request, query);
 				return await query;
 			}
 		},
@@ -631,11 +698,22 @@ const init = async () => {
 			handler: async (request, h) => {
 				let query = Location.query()
 					.select();
-				// eager joins
-				if (request.query['join']) {
-					let relations = `[${request.query['join'].split('|').join(', ')}]`;
-					query.eager(relations);
-				}
+				query = getAndApplyRelations(request, query);
+				return await query;
+			}
+		},
+		
+		// get a specific location by id
+		{
+			method: 'GET',
+			path: '/location/{location_id}',
+			config: {description: 'Retrieve one location'},
+			handler: async (request, h) => {
+				let query = Location.query()
+					.select()
+					.where('id', request.params['location_id'])
+					.first();
+				query = getAndApplyRelations(request, query);
 				return await query;
 			}
 		},
