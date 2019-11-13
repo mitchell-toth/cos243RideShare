@@ -1,0 +1,17 @@
+{
+  "name": "cos243RideShare",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/mitchell-toth/cos243RideShare.git",
+  "author": "Mitchell Toth <mitchell_toth@taylor.edu>",
+  "license": "MIT",
+  "dependencies": {
+    "@hapi/hapi": "^18.4.0",
+    "blipp": "^4.0.1",
+    "hapi-pino": "^6.3.0",
+    "joi": "^14.3.1",
+    "knex": "^0.20.1",
+    "objection": "^1.6.11",
+    "pg": "^7.12.1"
+  }
+}
