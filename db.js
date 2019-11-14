@@ -25,6 +25,7 @@ const Location = require('./Models/location');
 const State = require('./Models/state');
 const Passenger = require('./Models/passenger');
 const Ride = require('./Models/ride');
+const Admin = require('./Models/admin');
 
 
 //     RESTful API routes and handlers
@@ -252,6 +253,18 @@ const init = async () => {
 					.where('id', request.params['location_id'])
 					.first();
 				query = getAndApplyRelations(request, query);
+				return await query;
+			}
+		},
+		
+		// get all admins
+		{
+			method: 'GET',
+			path: '/admin',
+			config: {description: 'Retrieve all admins'},
+			handler: async (request, h) => {
+				let query = Admin.query()
+					.select();
 				return await query;
 			}
 		},
