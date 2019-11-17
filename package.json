@@ -5,6 +5,9 @@
   "repository": "https://github.com/mitchell-toth/cos243RideShare.git",
   "author": "Mitchell Toth <mitchell_toth@taylor.edu>",
   "license": "MIT",
+  "scripts": {
+	"watch": "nodemon db.js"
+  },
   "dependencies": {
     "@hapi/hapi": "^18.4.0",
     "blipp": "^4.0.1",
@@ -13,5 +16,8 @@
     "knex": "^0.20.1",
     "objection": "^1.6.11",
     "pg": "^7.12.1"
+  },
+  "devDependencies": {
+    "nodemon": "^1.19.4"
   }
 }

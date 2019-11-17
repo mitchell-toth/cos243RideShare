@@ -18,14 +18,14 @@ const objection = require('objection');
 const Model = objection.Model;
 Model.knex(knex);
 
-const Driver = require('./Models/driver');
-const Vehicle = require('./Models/vehicle');
-const VehicleType = require('./Models/vehicleType');
-const Location = require('./Models/location');
-const State = require('./Models/state');
-const Passenger = require('./Models/passenger');
-const Ride = require('./Models/ride');
-const Admin = require('./Models/admin');
+const Driver = require('./models/Driver');
+const Vehicle = require('./models/Vehicle');
+const VehicleType = require('./models/VehicleType');
+const Location = require('./models/Location');
+const State = require('./models/State');
+const Passenger = require('./models/Passenger');
+const Ride = require('./models/Ride');
+const Admin = require('./models/Admin');
 
 
 //     RESTful API routes and handlers
@@ -73,35 +73,35 @@ const init = async () => {
 		// get all drivers
 		{
 			method: 'GET',
-			path: '/driver',
+			path: '/drivers',
 			config: {description: 'Retrieve all drivers'},
-			handler: async (request, h) => {
+			handler: (request, h) => {
 				let query = Driver.query()
 					.select();
 				query = getAndApplyRelations(request, query);
-				return await query;
+				return query;
 			}
 		},
 		
 		// get a specific driver by id
 		{
 			method: 'GET',
-			path: '/driver/{driver_id}',
+			path: '/drivers/{driver_id}',
 			config: {description: 'Retrieve one driver'},
-			handler: async (request, h) => {
+			handler: (request, h) => {
 				let query = Driver.query()
 					.select()
 					.where('id', request.params['driver_id'])
 					.first();
 				query = getAndApplyRelations(request, query);
-				return await query;
+				return query;
 			}
 		},
 		
 		// create a driver
 		{
 			method: 'POST',
-			path: '/driver',
+			path: '/drivers',
 			config: {
 				description: 'Create a new driver',
 				validate: {
@@ -112,160 +112,160 @@ const init = async () => {
 					})
 				}
 			},
-			handler: async (request, h) => {
+			handler: (request, h) => {
 				let query = Driver.query()
 					.insert(request.payload);
-				return await query;
+				return query;
 			}
 		},
 		
 		// get all vehicles
 		{
 			method: 'GET',
-			path: '/vehicle',
+			path: '/vehicles',
 			config: {description: 'Retrieve all vehicles'},
-			handler: async (request, h) => {
+			handler: (request, h) => {
 				let query = Vehicle.query()
 					.select();
 				query = getAndApplyRelations(request, query);
-				return await query;
+				return query;
 			}
 		},
 		
 		// get a specific vehicle by id
 		{
 			method: 'GET',
-			path: '/vehicle/{vehicle_id}',
+			path: '/vehicles/{vehicle_id}',
 			config: {description: 'Retrieve one vehicle'},
-			handler: async (request, h) => {
+			handler: (request, h) => {
 				let query = Vehicle.query()
 					.select()
 					.where('id', request.params['vehicle_id'])
 					.first();
 				query = getAndApplyRelations(request, query);
-				return await query;
+				return query;
 			}
 		},
 		
 		// get all vehicle types
 		{
 			method: 'GET',
-			path: '/vehicle_type',
+			path: '/vehicle_types',
 			config: {description: 'Retrieve all vehicle types'},
-			handler: async (request, h) => {
+			handler: (request, h) => {
 				let query = VehicleType.query()
 					.select();
 				query = getAndApplyRelations(request, query);
-				return await query;
+				return query;
 			}
 		},
 		
 		// get all rides
 		{
 			method: 'GET',
-			path: '/ride',
+			path: '/rides',
 			config: {description: 'Retrieve all rides'},
-			handler: async (request, h) => {
+			handler: (request, h) => {
 				let query = Ride.query()
 					.select();
 				query = getAndApplyRelations(request, query);
-				return await query;
+				return query;
 			}
 		},
 		
 		// get a specific ride by id
 		{
 			method: 'GET',
-			path: '/ride/{ride_id}',
+			path: '/rides/{ride_id}',
 			config: {description: 'Retrieve one ride'},
-			handler: async (request, h) => {
+			handler: (request, h) => {
 				let query = Ride.query()
 					.select()
 					.where('id', request.params['ride_id'])
 					.first();
 				query = getAndApplyRelations(request, query);
-				return await query;
+				return query;
 			}
 		},
 		
 		// get all passengers
 		{
 			method: 'GET',
-			path: '/passenger',
+			path: '/passengers',
 			config: {description: 'Retrieve all passengers'},
-			handler: async (request, h) => {
+			handler: (request, h) => {
 				let query = Passenger.query()
 					.select();
 				query = getAndApplyRelations(request, query);
-				return await query;
+				return query;
 			}
 		},
 		
 		// get a specific passenger by id
 		{
 			method: 'GET',
-			path: '/passenger/{passenger_id}',
+			path: '/passengers/{passenger_id}',
 			config: {description: 'Retrieve one passenger'},
-			handler: async (request, h) => {
+			handler: (request, h) => {
 				let query = Passenger.query()
 					.select()
 					.where('id', request.params['passenger_id'])
 					.first();
 				query = getAndApplyRelations(request, query);
-				return await query;
+				return query;
 			}
 		},
 		
 		// get all U.S. states and abbreviations
 		{
 			method: 'GET',
-			path: '/state',
+			path: '/states',
 			config: {description: 'Retrieve all U.S. states'},
-			handler: async (request, h) => {
+			handler: (request, h) => {
 				let query = State.query()
 					.select();
 				query = getAndApplyRelations(request, query);
-				return await query;
+				return query;
 			}
 		},
 		
 		// get all locations
 		{
 			method: 'GET',
-			path: '/location',
+			path: '/locations',
 			config: {description: 'Retrieve all locations'},
-			handler: async (request, h) => {
+			handler: (request, h) => {
 				let query = Location.query()
 					.select();
 				query = getAndApplyRelations(request, query);
-				return await query;
+				return query;
 			}
 		},
 		
 		// get a specific location by id
 		{
 			method: 'GET',
-			path: '/location/{location_id}',
+			path: '/locations/{location_id}',
 			config: {description: 'Retrieve one location'},
-			handler: async (request, h) => {
+			handler: (request, h) => {
 				let query = Location.query()
 					.select()
 					.where('id', request.params['location_id'])
 					.first();
 				query = getAndApplyRelations(request, query);
-				return await query;
+				return query;
 			}
 		},
 		
 		// get all admins
 		{
 			method: 'GET',
-			path: '/admin',
+			path: '/admins',
 			config: {description: 'Retrieve all admins'},
-			handler: async (request, h) => {
+			handler: (request, h) => {
 				let query = Admin.query()
 					.select();
-				return await query;
+				return query;
 			}
 		},
 		

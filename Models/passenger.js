@@ -3,7 +3,7 @@ const objection = require('objection');
 const Model = objection.Model;
 
 // Other Objection model classes needed
-const Ride = require('./ride');
+const Ride = require('./Ride');
 
 // "passenger" table
 class Passenger extends Model {

@@ -3,10 +3,10 @@ const objection = require('objection');
 const Model = objection.Model;
 
 // Other Objection model classes needed
-const Passenger = require('./passenger');
-const Driver = require('./driver');
-const Vehicle = require('./vehicle');
-const Location = require('./location');
+const Passenger = require('./Passenger');
+const Driver = require('./Driver');
+const Vehicle = require('./Vehicle');
+const Location = require('./Location');
 
 // "ride" table
 class Ride extends Model {
