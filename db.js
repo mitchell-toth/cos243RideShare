@@ -13,11 +13,12 @@ const knex = require('knex')({
 	}
 });
 
-// Configure objection object
+// Objection
 const objection = require('objection');
 const Model = objection.Model;
 Model.knex(knex);
 
+// Models
 const Driver = require('./models/Driver');
 const Vehicle = require('./models/Vehicle');
 const VehicleType = require('./models/VehicleType');
@@ -31,6 +32,7 @@ const Admin = require('./models/Admin');
 //     RESTful API routes and handlers
 //===========================================
 
+// helper function to apply eager joins
 function getAndApplyRelations(request, query) {
 	if (request.query['join']) {
 		let relations = `[${request.query['join'].split('|').join(', ')}]`;
@@ -39,11 +41,11 @@ function getAndApplyRelations(request, query) {
 	return query;
 }
 
+// Hapi
+const Hapi = require('@hapi/hapi');  // server
+const Joi = require('@hapi/joi');  // input validation
+
 // configure hapi
-const Hapi = require('@hapi/hapi');
-
-const Joi = require('joi');
-
 const init = async () => {
 	// create a new hapi server
 	const server = Hapi.server({
