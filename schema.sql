@@ -2,11 +2,11 @@
 -- COS243
 
 
-create schema public;
+--create schema public;
 
-comment on schema public is 'standard public schema';
+--comment on schema public is 'standard public schema';
 
-alter schema public owner to postgres;
+--alter schema public owner to postgres;
 
 create table if not exists "authorization"
 (
@@ -20,7 +20,7 @@ create table if not exists "authorization"
 		primary key (driver_id, vehicle_id)
 );
 
-alter table "authorization" owner to mitchell_toth;
+--alter table "authorization" owner to mitchell_toth;
 
 create table if not exists driver
 (
@@ -32,7 +32,7 @@ create table if not exists driver
 	phone varchar not null
 );
 
-alter table driver owner to mitchell_toth;
+--alter table driver owner to mitchell_toth;
 
 create table if not exists drivers
 (
@@ -46,7 +46,7 @@ create table if not exists drivers
 		primary key (driver_id, ride_id)
 );
 
-alter table drivers owner to mitchell_toth;
+--alter table drivers owner to mitchell_toth;
 
 create table if not exists location
 (
@@ -62,7 +62,7 @@ create table if not exists location
 	zip_code varchar not null
 );
 
-alter table location owner to mitchell_toth;
+--alter table location owner to mitchell_toth;
 
 create table if not exists passengers
 (
@@ -76,7 +76,7 @@ create table if not exists passengers
 		primary key (passenger_id, ride_id)
 );
 
-alter table passengers owner to mitchell_toth;
+--alter table passengers owner to mitchell_toth;
 
 create table if not exists ride
 (
@@ -99,7 +99,7 @@ create table if not exists ride
 			references public.location (id)
 );
 
-alter table ride owner to mitchell_toth;
+--alter table ride owner to mitchell_toth;
 
 create table if not exists state
 (
@@ -109,7 +109,7 @@ create table if not exists state
 	name varchar not null
 );
 
-alter table state owner to mitchell_toth;
+--alter table state owner to mitchell_toth;
 
 create table if not exists vehicle
 (
@@ -129,7 +129,7 @@ create table if not exists vehicle
 	vehicle_type_explanation varchar
 );
 
-alter table vehicle owner to mitchell_toth;
+--alter table vehicle owner to mitchell_toth;
 
 create table if not exists vehicle_type
 (
@@ -139,7 +139,7 @@ create table if not exists vehicle_type
 	type varchar not null
 );
 
-alter table vehicle_type owner to mitchell_toth;
+--alter table vehicle_type owner to mitchell_toth;
 
 create table if not exists passenger
 (
@@ -151,7 +151,7 @@ create table if not exists passenger
 	phone varchar not null
 );
 
-alter table passenger owner to mitchell_toth;
+--alter table passenger owner to mitchell_toth;
 
 create table if not exists admin
 (
@@ -162,7 +162,7 @@ create table if not exists admin
 	last_name varchar not null
 );
 
-alter table admin owner to mitchell_toth;
+--alter table admin owner to mitchell_toth;
 
 create unique index if not exists admin_id_uindex
 	on admin (id);

@@ -1,7 +1,7 @@
 <template>
   <v-container>
     <div>
-      <h4 class="display-1">Sign Up</h4>
+      <h4 class="display-1">Sign Up - Driver</h4>
 
       <instructions details="Sign up for our nifty site." />
 
@@ -24,6 +24,7 @@
           label="Your email address"
         >
         </v-text-field>
+        <!--
         <v-text-field
           v-model="newMember.password"
           v-bind:rules="rules.password"
@@ -33,6 +34,7 @@
           required
         >
         </v-text-field>
+        -->
         <v-btn v-bind:disabled="!valid" v-on:click="handleSubmit"
           >Sign Up
         </v-btn>
@@ -79,7 +81,6 @@ export default {
         firstName: "",
         lastName: "",
         email: "",
-        password: ""
       },
 
       // Was an account created successfully?
@@ -99,12 +100,6 @@ export default {
       rules: {
         required: [val => val.length > 0 || "Required"],
         email: [val => /^\w+@\w+\.\w{2,}$/.test(val) || "Invalid e-mail"],
-        password: [
-          val => /[A-Z]/.test(val) || "Need upper case letter",
-          val => /[a-z]/.test(val) || "Need lower case letter",
-          val => /\d/.test(val) || "Need digit",
-          val => val.length >= 8 || "Minimum 8 characters"
-        ]
       }
     };
   },
@@ -116,11 +111,11 @@ export default {
 
       // Post the content of the form to the Hapi server.
       this.$axios
-        .post("/accounts", {
-          firstName: this.newMember.firstName,
-          lastName: this.newMember.lastName,
-          email: this.newMember.email,
-          password: this.newMember.password
+        .post("/drivers", {
+          first_name: this.newMember.firstName,
+          last_name: this.newMember.lastName,
+          //email: this.newMember.email,
+          phone: "111-111-1111"
         })
         .then(result => {
           // Based on whether things worked or not, show the
@@ -150,7 +145,7 @@ export default {
       this.dialogVisible = false;
       if (this.accountCreated) {
         // Only navigate away from the sign-up page if we were successful.
-        this.$router.push({ name: "accounts" });
+        //this.$router.push({ name: "accounts" });
       }
     }
   }

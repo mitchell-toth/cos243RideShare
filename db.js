@@ -50,7 +50,10 @@ const init = async () => {
 	// create a new hapi server
 	const server = Hapi.server({
 		host: 'localhost',
-		port: 3000
+		port: 3000,
+		routes: {
+			cors: true
+		}
 	});
 	
 	// output endpoints at startup
@@ -104,10 +107,11 @@ const init = async () => {
 					})
 				}
 			},
-			handler: (request, h) => {
+			handler: async (request, h) => {
 				let query = Driver.query()
 					.insert(request.payload);
-				return query;
+				await query;
+				return {"ok": true, "msge": "Yay! Signed up as a Driver!"};
 			}
 		},
 		
