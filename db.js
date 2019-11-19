@@ -61,16 +61,6 @@ const init = async () => {
 	
 	// connection routes
 	server.route([
-	
-		// default path
-		{
-			method: 'GET',
-			path: '/',
-			config: {description: 'Default path'},
-			handler: (request,h) => {
-				return 'Hello, Hapi!';
-			}
-		},
 		
 		// get all drivers
 		{
