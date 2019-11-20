@@ -103,15 +103,24 @@ const init = async () => {
 					payload: Joi.object({
 						first_name: Joi.string().required(),
 						last_name: Joi.string().required(),
-						phone: Joi.string()
+						phone: Joi.string().required(),
+						email: Joi.string().email().required()
 					})
 				}
 			},
 			handler: async (request, h) => {
-				let query = Driver.query()
-					.insert(request.payload);
-				await query;
-				return {"ok": true, "msge": "Yay! Signed up as a Driver!"};
+				const existingAccount = await Driver.query()
+					.where("email", request.payload.email)
+					.first();
+				if (existingAccount) {
+					return {ok: false, msge: `A driver with email '${request.payload.email}' is already registered`};
+				}
+				const newAccount = await Driver.query().insert(request.payload);
+				if (newAccount) {
+					return {ok: true, msge: `Registered driver '${request.payload.email}'`};
+				} else {
+					return {ok: false, msge: `Couldn't register driver with email '${request.payload.email}'`};
+				}
 			}
 		},
 		

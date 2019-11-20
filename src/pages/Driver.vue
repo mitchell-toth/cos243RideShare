@@ -1,27 +1,37 @@
 <template>
   <v-container>
     <div>
-      <h4 class="display-1">Sign Up - Driver</h4>
+      <h4 class="display-1">Become a Driver</h4>
 
-      <instructions details="Sign up for our nifty site." />
+      <instructions details="Sign up to drive for Ride Share, then pick a ride and a vehicle." />
 
       <v-form v-model="valid">
         <v-text-field
-          v-model="newMember.firstName"
+          v-model="newDriver.firstName"
           v-bind:rules="rules.required"
           label="First name"
         ></v-text-field>
         <v-text-field
-          v-model="newMember.lastName"
+          v-model="newDriver.lastName"
           v-bind:rules="rules.required"
           label="Last name"
         ></v-text-field>
         <v-text-field
-          v-model="newMember.email"
+                v-model="newDriver.phone"
+                v-bind:rules="rules.phone"
+                error-count="10"
+                type="phone"
+                label="Your phone number"
+                required
+        >
+        </v-text-field>
+        <v-text-field
+          v-model="newDriver.email"
           v-bind:rules="rules.email"
           error-count="10"
           type="email"
           label="Your email address"
+          required
         >
         </v-text-field>
         <!--
@@ -77,9 +87,10 @@ export default {
       valid: false, // Are all the fields in the form valid?
 
       // Object to collect account data
-      newMember: {
+      newDriver: {
         firstName: "",
         lastName: "",
+        phone: "",
         email: "",
       },
 
@@ -100,6 +111,7 @@ export default {
       rules: {
         required: [val => val.length > 0 || "Required"],
         email: [val => /^\w+@\w+\.\w{2,}$/.test(val) || "Invalid e-mail"],
+        phone: [val => /(\d-)?\d{3}-\d{3}-\d{4}/.test(val) || "Invalid phone number. Please use this format: xxx-xxx-xxxx"]
       }
     };
   },
@@ -112,10 +124,10 @@ export default {
       // Post the content of the form to the Hapi server.
       this.$axios
         .post("/drivers", {
-          first_name: this.newMember.firstName,
-          last_name: this.newMember.lastName,
-          //email: this.newMember.email,
-          phone: "111-111-1111"
+          first_name: this.newDriver.firstName,
+          last_name: this.newDriver.lastName,
+          email: this.newDriver.email,
+          phone: this.newDriver.phone
         })
         .then(result => {
           // Based on whether things worked or not, show the
@@ -129,7 +141,7 @@ export default {
             }
           }
         })
-        .catch(err => this.showDialog("Failed", err));
+        .catch(err => this.showDialog("Failed", `${err}. Please ensure that all fields have valid input`));
     },
 
     // Helper method to display the dialog box with the appropriate content.

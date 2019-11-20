@@ -2,12 +2,6 @@
 -- COS243
 
 
---create schema public;
-
---comment on schema public is 'standard public schema';
-
---alter schema public owner to postgres;
-
 create table if not exists "authorization"
 (
 	driver_id integer not null
@@ -22,19 +16,20 @@ create table if not exists "authorization"
 
 --alter table "authorization" owner to mitchell_toth;
 
-create table if not exists driver
+create table if not exists "driver"
 (
 	id serial not null
 		constraint driver_pk
 			primary key,
 	first_name varchar not null,
 	last_name varchar not null,
-	phone varchar not null
+	phone varchar not null,
+	email varchar not null
 );
 
 --alter table driver owner to mitchell_toth;
 
-create table if not exists drivers
+create table if not exists "drivers"
 (
 	driver_id integer not null
 		constraint drivers_driver_id_fk
@@ -48,7 +43,7 @@ create table if not exists drivers
 
 --alter table drivers owner to mitchell_toth;
 
-create table if not exists location
+create table if not exists "location"
 (
 	id serial not null
 		constraint location_pk
@@ -64,7 +59,7 @@ create table if not exists location
 
 --alter table location owner to mitchell_toth;
 
-create table if not exists passengers
+create table if not exists "passengers"
 (
 	passenger_id integer not null
 		constraint passengers_passenger_id_fk
@@ -78,7 +73,7 @@ create table if not exists passengers
 
 --alter table passengers owner to mitchell_toth;
 
-create table if not exists ride
+create table if not exists "ride"
 (
 	id serial not null
 		constraint ride_pk
@@ -101,7 +96,7 @@ create table if not exists ride
 
 --alter table ride owner to mitchell_toth;
 
-create table if not exists state
+create table if not exists "state"
 (
 	abbreviation varchar not null
 		constraint state_pk
@@ -111,7 +106,7 @@ create table if not exists state
 
 --alter table state owner to mitchell_toth;
 
-create table if not exists vehicle
+create table if not exists "vehicle"
 (
 	id serial not null
 		constraint vehicle_pk
@@ -125,13 +120,12 @@ create table if not exists vehicle
 	capacity integer not null,
 	mpg double precision not null,
 	license_state varchar not null,
-	license_plate varchar not null,
-	vehicle_type_explanation varchar
+	license_plate varchar not null
 );
 
 --alter table vehicle owner to mitchell_toth;
 
-create table if not exists vehicle_type
+create table if not exists "vehicle_type"
 (
 	id serial not null
 		constraint vehicle_type_pk
@@ -141,31 +135,32 @@ create table if not exists vehicle_type
 
 --alter table vehicle_type owner to mitchell_toth;
 
-create table if not exists passenger
+create table if not exists "passenger"
 (
 	id serial not null
 		constraint passenger_pk
 			primary key,
 	first_name varchar not null,
 	last_name varchar not null,
-	phone varchar not null
+	phone varchar not null,
+	email varchar not null
 );
 
 --alter table passenger owner to mitchell_toth;
 
-create table if not exists admin
+create table if not exists "admin"
 (
 	id serial not null
 		constraint admin_pk
 			primary key,
 	first_name varchar not null,
-	last_name varchar not null
+	last_name varchar not null,
+	phone varchar not null,
+	email varchar not null
 );
 
 --alter table admin owner to mitchell_toth;
 
-create unique index if not exists admin_id_uindex
-	on admin (id);
 
 
 

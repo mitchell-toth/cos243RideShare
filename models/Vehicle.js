@@ -6,6 +6,7 @@ const Model = objection.Model;
 const VehicleType = require('./VehicleType');
 const Driver = require('./Driver');
 const Ride = require('./Ride');
+const State = require('./State');
 
 // "vehicle" table
 class Vehicle extends Model {
@@ -46,6 +47,15 @@ class Vehicle extends Model {
 				join: {
 					from: 'vehicle.id',
 					to: 'ride.vehicle_id'
+				}
+			},
+
+			state: {
+				relation: Model.BelongsToOneRelation,
+				modelClass: State,
+				join: {
+					from: 'vehicle.license_state',
+					to: 'state.abbreviation'
 				}
 			}
 		}
