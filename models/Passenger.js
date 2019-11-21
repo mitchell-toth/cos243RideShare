@@ -2,9 +2,6 @@
 const objection = require('objection');
 const Model = objection.Model;
 
-// Other Objection model classes needed
-const Ride = require('./Ride');
-
 // "passenger" table
 class Passenger extends Model {
 	static get tableName() {
@@ -12,6 +9,9 @@ class Passenger extends Model {
 	}
 	
 	static get relationMappings() {
+		// Other Objection model classes needed
+		const Ride = require('./Ride');
+
 		return {
 			// join to "ride" table to access info about the rides that include a certain passenger (or many passengers)
 			rides: {

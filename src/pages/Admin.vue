@@ -32,7 +32,11 @@
       <vehicle-type-dropdown></vehicle-type-dropdown><br>
       <vehicle-dropdown></vehicle-dropdown><br>
       <driver-dropdown></driver-dropdown><br>
-      <ride-dropdown></ride-dropdown>
+      <ride-dropdown></ride-dropdown><br>
+      <state-dropdown></state-dropdown><br>
+
+      <ride-table type-of-rides="upcoming"></ride-table><br>
+      <vehicle-table></vehicle-table>
 
       <div class="text-xs-center">
         <v-dialog v-model="dialogVisible" width="500">
@@ -70,13 +74,19 @@ import VehicleTypeDropdown from "../components/VehicleTypeDropdown";
 import VehicleDropdown from "../components/VehicleDropdown";
 import DriverDropdown from "../components/DriverDropdown";
 import RideDropdown from "../components/RideDropdown";
+import RideTable from "../components/RideTable";
+import VehicleTable from "../components/VehicleTable";
+import StateDropdown from "../components/StateDropdown";
 export default {
   name: "Accounts",
   components: {
+    StateDropdown,
     VehicleDropdown,
     VehicleTypeDropdown,
     DriverDropdown,
-    RideDropdown
+    RideDropdown,
+    RideTable,
+    VehicleTable
   },
   data: function() {
     return {
@@ -106,8 +116,10 @@ export default {
     };
   },
 
+  /*
   mounted: function() {
     this.$axios.get("/rides").then(response => {
+      /*
       this.accounts = response.data.map(account => ({
         id: account.id,
         email: account.email,
@@ -116,6 +128,7 @@ export default {
       }));
     });
   },
+  */
 
   methods: {
     // Display a snackbar message.

@@ -2,9 +2,6 @@
 const objection = require('objection');
 const Model = objection.Model;
 
-// Other Objection model classes needed
-const Vehicle = require('./Vehicle');
-
 // "vehicle_type" table
 class VehicleType extends Model {
 	static get tableName() {
@@ -12,6 +9,9 @@ class VehicleType extends Model {
 	}
 	
 	static get relationMappings() {
+		// Other Objection model classes needed
+		const Vehicle = require('./Vehicle');
+
 		return {
 			// join to "vehicle" table to access info about all the vehicles of a certain type
 			vehicles: {

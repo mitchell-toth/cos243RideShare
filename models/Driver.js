@@ -2,10 +2,6 @@
 const objection = require('objection');
 const Model = objection.Model;
 
-// Other Objection model classes needed
-const Vehicle = require('./Vehicle');
-const Ride = require('./Ride');
-
 // "driver" table
 class Driver extends Model {
 	static get tableName() {
@@ -13,6 +9,10 @@ class Driver extends Model {
 	}
 	
 	static get relationMappings() {
+		// Other Objection model classes needed
+		const Vehicle = require('./Vehicle');
+		const Ride = require('./Ride');
+
 		return {
 			// join to "vehicle" table to access info about the vehicles a driver is authorized to drive
 			vehicles: {

@@ -10,7 +10,8 @@
 export default {
     data: function() {
         return {
-            vehicleTypes: []
+            vehicleTypes: [],
+            defaultSelected: "",
         }
     },
     mounted: function() {
@@ -20,6 +21,6 @@ export default {
                 value: vehicleType.id
             }));
         });
-    }
+    },
 };
 </script>

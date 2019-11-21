@@ -2,9 +2,6 @@
 const objection = require('objection');
 const Model = objection.Model;
 
-// Other Objection model classes needed
-const Location = require('./Location');
-
 // "state" table
 class State extends Model {
 	static get tableName() {
@@ -12,6 +9,9 @@ class State extends Model {
 	}
 	
 	static get relationMappings() {
+		// Other Objection model classes needed
+		const Location = require('./Location');
+
 		return {
 			// join to "location" table to access the info about any locations that are in a certain state (by abbreviation)
 			locations: {
