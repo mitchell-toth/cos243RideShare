@@ -2,21 +2,7 @@
 -- COS243
 
 
-create table if not exists "authorization"
-(
-	driver_id integer not null
-		constraint authorization_driver_id_fk
-			references public.driver (id),
-	vehicle_id integer not null
-		constraint authorization_vehicle_id_fk
-			references public.vehicle (id),
-	constraint authorization_pk
-		primary key (driver_id, vehicle_id)
-);
-
---alter table "authorization" owner to mitchell_toth;
-
-create table if not exists "driver"
+create table if not exists driver
 (
 	id serial not null
 		constraint driver_pk
@@ -29,21 +15,17 @@ create table if not exists "driver"
 
 --alter table driver owner to mitchell_toth;
 
-create table if not exists "drivers"
+create table if not exists state
 (
-	driver_id integer not null
-		constraint drivers_driver_id_fk
-			references public.driver (id),
-	ride_id integer not null
-		constraint drivers_ride_id_fk
-			references public.ride (id),
-	constraint drivers_pk
-		primary key (driver_id, ride_id)
+	abbreviation varchar not null
+		constraint state_pk
+			primary key,
+	name varchar not null
 );
 
---alter table drivers owner to mitchell_toth;
+--alter table state owner to mitchell_toth;
 
-create table if not exists "location"
+create table if not exists location
 (
 	id serial not null
 		constraint location_pk
@@ -53,27 +35,59 @@ create table if not exists "location"
 	city varchar not null,
 	state varchar not null
 		constraint location_state_abbreviation_fk
-			references public.state (abbreviation),
+			references state,
 	zip_code varchar not null
 );
 
 --alter table location owner to mitchell_toth;
 
-create table if not exists "passengers"
+create table if not exists vehicle_type
 (
-	passenger_id integer not null
-		constraint passengers_passenger_id_fk
-			references public.passenger (id),
-	ride_id integer not null
-		constraint passengers_ride_id_fk
-			references public.ride (id),
-	constraint passengers_pk
-		primary key (passenger_id, ride_id)
+	id serial not null
+		constraint vehicle_type_pk
+			primary key,
+	type varchar not null
 );
 
---alter table passengers owner to mitchell_toth;
+--alter table vehicle_type owner to mitchell_toth;
 
-create table if not exists "ride"
+create table if not exists vehicle
+(
+	id serial not null
+		constraint vehicle_pk
+			primary key,
+	make varchar not null,
+	model varchar not null,
+	color varchar,
+	vehicle_type_id integer not null
+		constraint vehicle_vehicle_type_id_fk
+			references vehicle_type,
+	capacity integer not null,
+	mpg double precision not null,
+	license_state varchar not null
+		constraint vehicle_state_abbreviation_fk
+			references state,
+	license_plate varchar not null,
+	year integer not null
+);
+
+--alter table vehicle owner to mitchell_toth;
+
+create table if not exists "authorization"
+(
+	driver_id integer not null
+		constraint authorization_driver_id_fk
+			references driver,
+	vehicle_id integer not null
+		constraint authorization_vehicle_id_fk
+			references vehicle,
+	constraint authorization_pk
+		primary key (driver_id, vehicle_id)
+);
+
+--alter table "authorization" owner to mitchell_toth;
+
+create table if not exists ride
 (
 	id serial not null
 		constraint ride_pk
@@ -85,57 +99,32 @@ create table if not exists "ride"
 	fee double precision,
 	vehicle_id integer not null
 		constraint ride_vehicle_id_fk
-			references public.vehicle (id),
+			references vehicle,
 	from_location_id integer not null
 		constraint ride_location_id_fk
-			references public.location (id),
+			references location,
 	to_location_id integer not null
 		constraint ride_location_id_fk_2
-			references public.location (id)
+			references location
 );
 
 --alter table ride owner to mitchell_toth;
 
-create table if not exists "state"
+create table if not exists drivers
 (
-	abbreviation varchar not null
-		constraint state_pk
-			primary key,
-	name varchar not null
+	driver_id integer not null
+		constraint drivers_driver_id_fk
+			references driver,
+	ride_id integer not null
+		constraint drivers_ride_id_fk
+			references ride,
+	constraint drivers_pk
+		primary key (driver_id, ride_id)
 );
 
---alter table state owner to mitchell_toth;
+--alter table drivers owner to mitchell_toth;
 
-create table if not exists "vehicle"
-(
-	id serial not null
-		constraint vehicle_pk
-			primary key,
-	make varchar not null,
-	model varchar not null,
-	color varchar,
-	vehicle_type_id integer not null
-		constraint vehicle_vehicle_type_id_fk
-			references public.vehicle_type (id),
-	capacity integer not null,
-	mpg double precision not null,
-	license_state varchar not null,
-	license_plate varchar not null
-);
-
---alter table vehicle owner to mitchell_toth;
-
-create table if not exists "vehicle_type"
-(
-	id serial not null
-		constraint vehicle_type_pk
-			primary key,
-	type varchar not null
-);
-
---alter table vehicle_type owner to mitchell_toth;
-
-create table if not exists "passenger"
+create table if not exists passenger
 (
 	id serial not null
 		constraint passenger_pk
@@ -148,7 +137,21 @@ create table if not exists "passenger"
 
 --alter table passenger owner to mitchell_toth;
 
-create table if not exists "admin"
+create table if not exists passengers
+(
+	passenger_id integer not null
+		constraint passengers_passenger_id_fk
+			references passenger,
+	ride_id integer not null
+		constraint passengers_ride_id_fk
+			references ride,
+	constraint passengers_pk
+		primary key (passenger_id, ride_id)
+);
+
+--alter table passengers owner to mitchell_toth;
+
+create table if not exists admin
 (
 	id serial not null
 		constraint admin_pk
@@ -160,6 +163,8 @@ create table if not exists "admin"
 );
 
 --alter table admin owner to mitchell_toth;
+
+
 
 
 

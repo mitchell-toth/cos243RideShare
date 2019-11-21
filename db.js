@@ -70,9 +70,8 @@ const init = async () => {
 			method: 'GET',
 			path: '/drivers',
 			config: {description: 'Retrieve all drivers'},
-			handler: (request, h) => {
-				let query = Driver.query()
-					.select();
+			handler: (request) => {
+				let query = Driver.query();
 				query = getAndApplyRelations(request, query);
 				return query;
 			}
@@ -83,9 +82,8 @@ const init = async () => {
 			method: 'GET',
 			path: '/drivers/{driver_id}',
 			config: {description: 'Retrieve one driver'},
-			handler: (request, h) => {
+			handler: (request) => {
 				let query = Driver.query()
-					.select()
 					.where('id', request.params['driver_id'])
 					.first();
 				query = getAndApplyRelations(request, query);
@@ -108,7 +106,7 @@ const init = async () => {
 					})
 				}
 			},
-			handler: async (request, h) => {
+			handler: async (request) => {
 				const existingAccount = await Driver.query()
 					.where("email", request.payload.email)
 					.first();
@@ -129,9 +127,8 @@ const init = async () => {
 			method: 'GET',
 			path: '/vehicles',
 			config: {description: 'Retrieve all vehicles'},
-			handler: (request, h) => {
-				let query = Vehicle.query()
-					.select();
+			handler: (request) => {
+				let query = Vehicle.query();
 				query = getAndApplyRelations(request, query);
 				return query;
 			}
@@ -142,9 +139,8 @@ const init = async () => {
 			method: 'GET',
 			path: '/vehicles/{vehicle_id}',
 			config: {description: 'Retrieve one vehicle'},
-			handler: (request, h) => {
+			handler: (request) => {
 				let query = Vehicle.query()
-					.select()
 					.where('id', request.params['vehicle_id'])
 					.first();
 				query = getAndApplyRelations(request, query);
@@ -157,11 +153,38 @@ const init = async () => {
 			method: 'GET',
 			path: '/vehicle_types',
 			config: {description: 'Retrieve all vehicle types'},
-			handler: (request, h) => {
-				let query = VehicleType.query()
-					.select();
+			handler: (request) => {
+				let query = VehicleType.query();
 				query = getAndApplyRelations(request, query);
 				return query;
+			}
+		},
+
+		// create a new vehicle type
+		{
+			method: 'POST',
+			path: '/vehicle_types',
+			config: {
+				description: 'Create a new vehicle type',
+				validate: {
+					payload: Joi.object({
+						type: Joi.string().required(),
+					})
+				}
+			},
+			handler: async (request) => {
+				const existingVehicleType = await VehicleType.query()
+					.where("type", request.payload.type)
+					.first();
+				if (existingVehicleType) {
+					return {ok: false, msge: `Vehicle type of '${request.payload.type}' already exists`};
+				}
+				const newVehicleType = await VehicleType.query().insert(request.payload);
+				if (newVehicleType) {
+					return {ok: true, msge: `New vehicle type '${request.payload.type}' created`};
+				} else {
+					return {ok: false, msge: `Couldn't create vehicle type '${request.payload.type}'`};
+				}
 			}
 		},
 		
@@ -170,9 +193,9 @@ const init = async () => {
 			method: 'GET',
 			path: '/rides',
 			config: {description: 'Retrieve all rides'},
-			handler: (request, h) => {
+			handler: (request) => {
 				let query = Ride.query()
-					.select();
+					.orderBy([{column: 'date', order: 'asc'}, {column: 'time', order: 'asc'}]);
 				query = getAndApplyRelations(request, query);
 				return query;
 			}
@@ -183,9 +206,8 @@ const init = async () => {
 			method: 'GET',
 			path: '/rides/{ride_id}',
 			config: {description: 'Retrieve one ride'},
-			handler: (request, h) => {
+			handler: (request) => {
 				let query = Ride.query()
-					.select()
 					.where('id', request.params['ride_id'])
 					.first();
 				query = getAndApplyRelations(request, query);
@@ -198,9 +220,8 @@ const init = async () => {
 			method: 'GET',
 			path: '/passengers',
 			config: {description: 'Retrieve all passengers'},
-			handler: (request, h) => {
-				let query = Passenger.query()
-					.select();
+			handler: (request) => {
+				let query = Passenger.query();
 				query = getAndApplyRelations(request, query);
 				return query;
 			}
@@ -211,9 +232,8 @@ const init = async () => {
 			method: 'GET',
 			path: '/passengers/{passenger_id}',
 			config: {description: 'Retrieve one passenger'},
-			handler: (request, h) => {
+			handler: (request) => {
 				let query = Passenger.query()
-					.select()
 					.where('id', request.params['passenger_id'])
 					.first();
 				query = getAndApplyRelations(request, query);
@@ -226,9 +246,8 @@ const init = async () => {
 			method: 'GET',
 			path: '/states',
 			config: {description: 'Retrieve all U.S. states'},
-			handler: (request, h) => {
-				let query = State.query()
-					.select();
+			handler: (request) => {
+				let query = State.query();
 				query = getAndApplyRelations(request, query);
 				return query;
 			}
@@ -239,9 +258,8 @@ const init = async () => {
 			method: 'GET',
 			path: '/locations',
 			config: {description: 'Retrieve all locations'},
-			handler: (request, h) => {
-				let query = Location.query()
-					.select();
+			handler: (request) => {
+				let query = Location.query();
 				query = getAndApplyRelations(request, query);
 				return query;
 			}
@@ -252,9 +270,8 @@ const init = async () => {
 			method: 'GET',
 			path: '/locations/{location_id}',
 			config: {description: 'Retrieve one location'},
-			handler: (request, h) => {
+			handler: (request) => {
 				let query = Location.query()
-					.select()
 					.where('id', request.params['location_id'])
 					.first();
 				query = getAndApplyRelations(request, query);
@@ -267,15 +284,10 @@ const init = async () => {
 			method: 'GET',
 			path: '/admins',
 			config: {description: 'Retrieve all admins'},
-			handler: (request, h) => {
-				let query = Admin.query()
-					.select();
-				return query;
+			handler: () => {
+				return Admin.query();
 			}
 		},
-		
-		
-		
 	]);
 	
 	// activate the server
