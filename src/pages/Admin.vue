@@ -35,7 +35,7 @@
       <ride-dropdown></ride-dropdown><br>
       <state-dropdown></state-dropdown><br>
 
-      <ride-table type-of-rides="upcoming"></ride-table><br>
+      <ride-table type-of-rides="Upcoming"></ride-table><br>
       <vehicle-table></vehicle-table>
 
       <div class="text-xs-center">
@@ -115,20 +115,6 @@ export default {
       }
     };
   },
-
-  /*
-  mounted: function() {
-    this.$axios.get("/rides").then(response => {
-      /*
-      this.accounts = response.data.map(account => ({
-        id: account.id,
-        email: account.email,
-        firstName: account.first_name,
-        lastName: account.last_name
-      }));
-    });
-  },
-  */
 
   methods: {
     // Display a snackbar message.

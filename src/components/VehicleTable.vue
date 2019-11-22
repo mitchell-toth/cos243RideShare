@@ -112,6 +112,21 @@ export default {
             vehicles: [],
             search: "",
             selectedVehicle: {},
+            newVehicle: {
+                make: "",
+                model: "",
+                vehicle_type: "",
+                vehicle_type_id: "",
+                year: "",
+                color: "",
+                license_state: "",
+                state: "",
+                license_plate: "",
+                capacity: "",
+                mpg: "",
+            },
+            editingAVehicle: false,
+            creatingAVehicle: false,
 
             rules: {
                 required: [val => val !== undefined && val.length > 0 || "Required"],
@@ -146,28 +161,42 @@ export default {
             return str.charAt(0).toUpperCase() + str.slice(1);
         },
         createVehicle() {
-            this.selectedVehicle = {};
-            this.showDialog("Add a Vehicle", "Text")
+            this.creatingAVehicle = true;
+            this.editingAVehicle = false;
+            this.selectedVehicle = this.newVehicle;
+            this.showDialog("Add a Vehicle")
         },
         editVehicle(item) {
+            this.creatingAVehicle = false;
+            this.editingAVehicle = true;
             this.selectedVehicle = item;
-            this.showDialog("Edit Vehicle", "Text");
+            this.showDialog("Edit Vehicle");
         },
         saveChangesOfVehicle() {
-            this.$axios.patch(`vehicles/${this.selectedVehicle.id}`, {
+            const vehicle = {
                 make: this.selectedVehicle.make,
                 model: this.selectedVehicle.model,
                 color: this.selectedVehicle.color,
-                vehicle_type_id: parseInt(this.selectedVehicle.model),
+                vehicle_type_id: parseInt(this.selectedVehicle.vehicle_type_id),
                 capacity: parseInt(this.selectedVehicle.capacity),
                 mpg: parseFloat(this.selectedVehicle.mpg),
                 license_state: this.selectedVehicle.license_state,
                 license_plate: this.selectedVehicle.license_plate,
                 year: parseInt(this.selectedVehicle.year)
-            }).then(result => {
-                console.log(result);
-            }).catch(err => this.showDialog("Failed", `${err}. Please ensure that all fields have valid input`));
-            //this.hideDialog();
+            };
+            if (this.editingAVehicle) {
+                this.$axios.patch(`vehicles/${parseInt(this.selectedVehicle.id)}`, vehicle)
+                    .then(result => {
+                        console.log(result);
+                }).catch(err => this.showDialog("Failed", `${err}. Please ensure that all fields have valid input`));
+            }
+            else if (this.creatingAVehicle) {
+                console.log(vehicle);
+                this.$axios.post("vehicles", vehicle)
+                    .then(result => {
+                        console.log(result);
+                    }).catch(err => this.showDialog("Failed", `${err}. Please ensure that all fields have valid input`));
+            }
         },
         cancelChangesOfVehicle() {
             this.hideDialog();

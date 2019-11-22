@@ -107,14 +107,14 @@ const init = async () => {
 				}
 			},
 			handler: async (request) => {
-				const existingAccount = await Driver.query()
+				const existingDriver = await Driver.query()
 					.where("email", request.payload.email)
 					.first();
-				if (existingAccount) {
+				if (existingDriver) {
 					return {ok: false, msge: `A driver with email '${request.payload.email}' is already registered`};
 				}
-				const newAccount = await Driver.query().insert(request.payload);
-				if (newAccount) {
+				const newDriver = await Driver.query().insert(request.payload);
+				if (newDriver) {
 					return {ok: true, msge: `Registered driver '${request.payload.email}'`};
 				} else {
 					return {ok: false, msge: `Couldn't register driver with email '${request.payload.email}'`};
@@ -150,42 +150,72 @@ const init = async () => {
 
 		// update a specific vehicle
 		{
-			method: 'PUT',
+			method: 'PATCH',
 			path: '/vehicles/{vehicle_id}',
 			config: {
 				description: 'Update a specified vehicle',
-				/*
 				validate: {
+					params: Joi.object({
+						vehicle_id: Joi.number().integer().required()
+					}),
 					payload: Joi.object({
 						make: Joi.string().required(),
 						model: Joi.string().required(),
 						vehicle_type_id: Joi.number().integer().required(),
 						year: Joi.number().integer().required(),
-						color: Joi.string().required(),
-						license_state: Joi.string().regex(/\d{2}/).required(),
+						color: Joi.string(),
+						license_state: Joi.string().regex(/\w{2}/).required(),
 						license_plate: Joi.string().required(),
 						capacity: Joi.number().integer().required(),
 						mpg: Joi.number().required(),
 					})
 				}
-				 */
 			},
 			handler: async (request) => {
 				let updatedVehicle = await Vehicle.query()
 					.where('id', request.params['vehicle_id'])
-					.update({
-						make: request.params.make,
-						model: request.params.model,
-						color: request.params.color,
-						vehicle_type_id: request.params.model,
-						capacity: request.params.capacity,
-						mpg: request.params.mpg,
-						license_state: request.params.license_state,
-						license_plate: request.params.license_plate,
-						year: request.params.year
-					});
-				console.log(updatedVehicle);
-				return {ok: true, msg: "Did it work?"};
+					.update(request.payload);
+				if (updatedVehicle) {return {ok: true, msg: "Vehicle has been updated"};}
+				else {return {ok: false, msg: "Failed to update vehicle"};}
+			}
+		},
+
+		// update a specific vehicle
+		{
+			method: 'POST',
+			path: '/vehicles',
+			config: {
+				description: 'Create a new vehicle',
+				/*
+				validate: {
+					payload: Joi.object({
+						make: Joi.string().required(),
+						model: Joi.string().required(),
+						//vehicle_type_id: Joi.number().integer().required(),
+						year: Joi.number().integer().required(),
+						color: Joi.string(),
+						//license_state: Joi.string().regex(/\w{2}/).required(),
+						license_plate: Joi.string().required(),
+						capacity: Joi.number().integer().required(),
+						mpg: Joi.number().required(),
+					})
+				}
+				*/
+			},
+			handler: async (request) => {
+				const existingVehicle = await Vehicle.query()
+					.where("license_plate", request.payload.license_plate)
+					.where("license_state", request.payload.license_state)
+					.first();
+				if (existingVehicle) {
+					return {ok: false, msge: `A vehicle with ${request.payload.license_state} license plate ${request.payload.license_plate} is already registered`};
+				}
+				const newVehicle = await Vehicle.query().insert(request.payload);
+				if (newVehicle) {
+					return {ok: true, msge: `Added vehicle '${request.payload.make} ${request.payload.model} ${request.payload.year} (${request.payload.license_plate})'`};
+				} else {
+					return {ok: false, msge: `Couldn't register driver with email '${request.payload.email}'`};
+				}
 			}
 		},
 		
@@ -238,6 +268,7 @@ const init = async () => {
 				let query = Ride.query()
 					.orderBy([{column: 'date', order: 'asc'}, {column: 'time', order: 'asc'}]);
 				if (request.query.type === "upcoming") {
+					console.log("Got in here");
 					query.where('date', '>=', new Date())
 				}
 				query = getAndApplyRelations(request, query);

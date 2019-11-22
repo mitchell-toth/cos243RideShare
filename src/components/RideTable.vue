@@ -1,7 +1,7 @@
 <template>
     <v-card>
         <v-card-title>
-            Rides
+            {{typeOfRides}} Rides
             <v-spacer></v-spacer>
             <v-text-field
                     v-model="search"
@@ -35,12 +35,12 @@ export default {
                 { text: "To", value: "to_location" }
             ],
             rides: [],
-            search: ""
+            search: "",
         }
     },
     mounted: function() {
         let url = "rides?join=fromLocation|toLocation|vehicle";
-        if (this.typeOfRides === "upcoming") { url += "&type=upcoming"; }
+        if (this.typeOfRides === "Upcoming") { url += "&type=upcoming"; }
         this.$axios.get(url).then(response => {
             this.rides = response.data.map(ride => ({
                 id: ride.id,
