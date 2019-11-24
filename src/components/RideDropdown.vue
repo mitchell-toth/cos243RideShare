@@ -2,6 +2,8 @@
     <v-select
             :items="rides"
             label="Select a Ride"
+            v-model="selectedOption.key"
+            v-on:change="selectRide"
             solo
     ></v-select>
 </template>
@@ -10,7 +12,11 @@
 export default {
     data: function() {
         return {
-            rides: []
+            rides: [],
+            selectedOption: {
+                key: "",
+                value: ""
+            }
         }
     },
     mounted: function() {
@@ -25,6 +31,10 @@ export default {
         getDate(str) {
             let date = new Date(str);
             return `${date.getMonth()}-${date.getDate()}-${date.getFullYear()}`;
+        },
+        selectRide: function() {
+            this.selectedOption.value = event.target.innerText;
+            this.$emit('selectedRide', this.selectedOption);
         }
     }
 };

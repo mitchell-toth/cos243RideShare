@@ -189,20 +189,21 @@ const init = async () => {
 				/*
 				validate: {
 					payload: Joi.object({
-						make: Joi.string().required(),
-						model: Joi.string().required(),
+						//make: Joi.string().required(),
+						//model: Joi.string().required(),
 						//vehicle_type_id: Joi.number().integer().required(),
-						year: Joi.number().integer().required(),
-						color: Joi.string(),
+						//year: Joi.number().integer().required(),
+						//color: Joi.string(),
 						//license_state: Joi.string().regex(/\w{2}/).required(),
-						license_plate: Joi.string().required(),
-						capacity: Joi.number().integer().required(),
-						mpg: Joi.number().required(),
+						//license_plate: Joi.string().required(),
+						//capacity: Joi.number().integer().required(),
+						//mpg: Joi.number().required(),
 					})
 				}
-				*/
+				 */
 			},
 			handler: async (request) => {
+				console.log(request.payload);
 				const existingVehicle = await Vehicle.query()
 					.where("license_plate", request.payload.license_plate)
 					.where("license_state", request.payload.license_state)
@@ -218,7 +219,7 @@ const init = async () => {
 				}
 			}
 		},
-		
+
 		// get all vehicle types
 		{
 			method: 'GET',
@@ -258,7 +259,7 @@ const init = async () => {
 				}
 			}
 		},
-		
+
 		// get all rides
 		{
 			method: 'GET',
@@ -275,7 +276,7 @@ const init = async () => {
 				return query;
 			}
 		},
-		
+
 		// get a specific ride by id
 		{
 			method: 'GET',
@@ -289,7 +290,7 @@ const init = async () => {
 				return query;
 			}
 		},
-		
+
 		// get all passengers
 		{
 			method: 'GET',
@@ -301,7 +302,7 @@ const init = async () => {
 				return query;
 			}
 		},
-		
+
 		// get a specific passenger by id
 		{
 			method: 'GET',
@@ -315,7 +316,7 @@ const init = async () => {
 				return query;
 			}
 		},
-		
+
 		// get all U.S. states and abbreviations
 		{
 			method: 'GET',
@@ -327,7 +328,7 @@ const init = async () => {
 				return query;
 			}
 		},
-		
+
 		// get all locations
 		{
 			method: 'GET',
@@ -339,7 +340,7 @@ const init = async () => {
 				return query;
 			}
 		},
-		
+
 		// get a specific location by id
 		{
 			method: 'GET',
@@ -353,7 +354,7 @@ const init = async () => {
 				return query;
 			}
 		},
-		
+
 		// get all admins
 		{
 			method: 'GET',
@@ -364,7 +365,7 @@ const init = async () => {
 			}
 		},
 	]);
-	
+
 	// activate the server
 	await server.start();
 };

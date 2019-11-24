@@ -32,57 +32,62 @@
                         {{ dialogHeader }}
                     </v-card-title>
 
-                    <v-card-text>
-                        <v-text-field
-                                label="Make"
-                                v-model="selectedVehicle.make"
-                                v-bind:rules="rules.required"
-                        ></v-text-field>
-                        <v-text-field
-                                label="Model"
-                                v-model="selectedVehicle.model"
-                                v-bind:rules="rules.required"
-                        ></v-text-field>
-                        <vehicle-type-dropdown
-                                v-model="selectedVehicle.vehicle_type_id"
-                        ></vehicle-type-dropdown>
-                        <v-text-field
-                                label="Year"
-                                v-model="selectedVehicle.year"
-                                v-bind:rules="rules.required"
-                        ></v-text-field>
-                        <v-text-field
-                                label="Color"
-                                v-model="selectedVehicle.color"
-                                v-bind:rules="rules.required"
-                        ></v-text-field>
-                        <state-dropdown
-                                v-model="selectedVehicle.license_state"
-                        ></state-dropdown>
-                        <v-text-field
-                                label="License Plate"
-                                v-model="selectedVehicle.license_plate"
-                                v-bind:rules="rules.required"
-                        ></v-text-field>
-                        <v-text-field
-                                label="Capacity"
-                                v-model="selectedVehicle.capacity"
-                                v-bind:rules="rules.required"
-                        ></v-text-field>
-                        <v-text-field
-                                label="MPG"
-                                v-model="selectedVehicle.mpg"
-                                v-bind:rules="rules.required"
-                        ></v-text-field>
-                    </v-card-text>
+                    <v-form v-model="valid">
+                        <v-card-text>
+                            <v-text-field
+                                    label="Make"
+                                    v-model="selectedVehicle.make"
+                                    v-bind:rules="rules.required_string"
+                            ></v-text-field>
+                            <v-text-field
+                                    label="Model"
+                                    v-model="selectedVehicle.model"
+                                    v-bind:rules="rules.required_string"
+                            ></v-text-field>
+                            <vehicle-type-dropdown
+                                    v-on:selectedVehicleType="selectVehicleType"
+                            ></vehicle-type-dropdown>
+                            <v-text-field
+                                    label="Year"
+                                    v-model="selectedVehicle.year"
+                                    v-bind:rules="rules.required_number"
+                                    type="number"
+                            ></v-text-field>
+                            <v-text-field
+                                    label="Color"
+                                    v-model="selectedVehicle.color"
+                                    v-bind:rules="rules.required_string"
+                            ></v-text-field>
+                            <state-dropdown
+                                    v-on:selectedState="selectState"
+                            ></state-dropdown>
+                            <v-text-field
+                                    label="License Plate"
+                                    v-model="selectedVehicle.license_plate"
+                                    v-bind:rules="rules.required_string"
+                            ></v-text-field>
+                            <v-text-field
+                                    label="Capacity"
+                                    v-model="selectedVehicle.capacity"
+                                    v-bind:rules="rules.required_number"
+                                    type="number"
+                            ></v-text-field>
+                            <v-text-field
+                                    label="MPG"
+                                    v-model="selectedVehicle.mpg"
+                                    v-bind:rules="rules.required_number"
+                                    type="number"
+                            ></v-text-field>
+                        </v-card-text>
 
-                    <v-divider></v-divider>
+                        <v-divider></v-divider>
 
-                    <v-card-actions>
-                        <v-spacer></v-spacer>
-                        <v-btn color="primary" text v-on:click="cancelChangesOfVehicle">Cancel</v-btn>
-                        <v-btn color="primary" text v-on:click="saveChangesOfVehicle">Save</v-btn>
-                    </v-card-actions>
+                        <v-card-actions>
+                            <v-spacer></v-spacer>
+                            <v-btn color="primary" text v-on:click="cancelChangesOfVehicle">Cancel</v-btn>
+                            <v-btn color="primary" v-bind:disabled="!valid" text v-on:click="saveChangesOfVehicle">Save</v-btn>
+                        </v-card-actions>
+                    </v-form>
                 </v-card>
             </v-dialog>
         </div>
@@ -94,6 +99,7 @@ import VehicleTypeDropdown from "./VehicleTypeDropdown";
 import StateDropdown from "./StateDropdown";
 export default {
     components: {StateDropdown, VehicleTypeDropdown},
+    //prop, v-bind
     data: function() {
         return {
             headers: [
@@ -128,8 +134,14 @@ export default {
             editingAVehicle: false,
             creatingAVehicle: false,
 
+            valid: false,
             rules: {
-                required: [val => val !== undefined && val.length > 0 || "Required"],
+                required_string: [val => val !== undefined && val.length > 0 || "Required"],
+                required_number: [
+                    val => val !== undefined && val !== 0 || "Required",
+                    val => val >= 0 || "Cannot be negative",
+                    val => /\d+/.test(val) || "Must be a number"
+                ]
             },
 
             // Data to be displayed by the dialog.
@@ -173,29 +185,21 @@ export default {
             this.showDialog("Edit Vehicle");
         },
         saveChangesOfVehicle() {
-            const vehicle = {
-                make: this.selectedVehicle.make,
-                model: this.selectedVehicle.model,
-                color: this.selectedVehicle.color,
-                vehicle_type_id: parseInt(this.selectedVehicle.vehicle_type_id),
-                capacity: parseInt(this.selectedVehicle.capacity),
-                mpg: parseFloat(this.selectedVehicle.mpg),
-                license_state: this.selectedVehicle.license_state,
-                license_plate: this.selectedVehicle.license_plate,
-                year: parseInt(this.selectedVehicle.year)
-            };
+            this.selectedVehicle.year = parseInt(this.selectedVehicle.year);
+            this.selectedVehicle.capacity = parseInt(this.selectedVehicle.capacity);
+            this.selectedVehicle.mpg = parseFloat(this.selectedVehicle.mpg);
+            console.log(this.selectedVehicle);
             if (this.editingAVehicle) {
-                this.$axios.patch(`vehicles/${parseInt(this.selectedVehicle.id)}`, vehicle)
+                this.$axios.patch(`vehicles/${parseInt(this.selectedVehicle.id)}`, this.selectedVehicle)
                     .then(result => {
                         console.log(result);
                 }).catch(err => this.showDialog("Failed", `${err}. Please ensure that all fields have valid input`));
             }
             else if (this.creatingAVehicle) {
-                console.log(vehicle);
-                this.$axios.post("vehicles", vehicle)
+                this.$axios.post("vehicles", this.selectedVehicle)
                     .then(result => {
                         console.log(result);
-                    }).catch(err => this.showDialog("Failed", `${err}. Please ensure that all fields have valid input`));
+                }).catch(err => this.showDialog("Failed", `${err}. Please ensure that all fields have valid input`));
             }
         },
         cancelChangesOfVehicle() {
@@ -209,6 +213,14 @@ export default {
             this.dialogVisible = false;
             this.selectedVehicle = {};
         },
+        selectVehicleType: function(vehicle_type_option) {
+            this.selectedVehicle.vehicle_type_id = vehicle_type_option.key;
+            this.selectedVehicle.vehicle_type = vehicle_type_option.value;
+        },
+        selectState: function(state_option) {
+            this.selectedVehicle.license_state = state_option.key;
+            this.selectedVehicle.state = state_option.value;
+        }
     }
 };
 </script>

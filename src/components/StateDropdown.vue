@@ -2,6 +2,8 @@
     <v-select
             :items="states"
             label="Select a State"
+            v-model="selectedOption.key"
+            v-on:change="selectState"
             solo
     ></v-select>
 </template>
@@ -10,7 +12,11 @@
 export default {
     data: function() {
         return {
-            states: []
+            states: [],
+            selectedOption: {
+                key: "",
+                value: ""
+            }
         }
     },
     mounted: function() {
@@ -20,6 +26,12 @@ export default {
                 value: state.abbreviation
             }));
         });
+    },
+    methods: {
+        selectState: function() {
+            this.selectedOption.value = event.target.innerText;
+            this.$emit('selectedState', this.selectedOption);
+        }
     }
 };
 </script>

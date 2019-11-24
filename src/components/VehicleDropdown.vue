@@ -2,6 +2,8 @@
     <v-select
             :items="vehicles"
             label="Select a Vehicle"
+            v-model="selectedOption.key"
+            v-on:change="selectVehicle"
             solo
     ></v-select>
 </template>
@@ -10,7 +12,11 @@
 export default {
     data: function() {
         return {
-            vehicles: []
+            vehicles: [],
+            selectedOption: {
+                key: "",
+                value: ""
+            }
         }
     },
     mounted: function() {
@@ -25,6 +31,10 @@ export default {
         capitalize(str) {
             if (typeof str !== 'string') return str;
             return str.charAt(0).toUpperCase() + str.slice(1);
+        },
+        selectVehicle: function() {
+            this.selectedOption.value = event.target.innerText;
+            this.$emit('selectedVehicle', this.selectedOption);
         }
     }
 };

@@ -2,6 +2,8 @@
     <v-select
             :items="drivers"
             label="Select a Registered Driver"
+            v-model="selectedOption.key"
+            v-on:change="selectDriver"
             solo
     ></v-select>
 </template>
@@ -10,7 +12,11 @@
 export default {
     data: function() {
         return {
-            drivers: []
+            drivers: [],
+            selectedOption: {
+                key: "",
+                value: ""
+            }
         }
     },
     mounted: function() {
@@ -20,6 +26,12 @@ export default {
                 value: driver.id
             }));
         });
+    },
+    methods: {
+        selectDriver: function() {
+            this.selectedOption.value = event.target.innerText;
+            this.$emit('selectedDriver', this.selectedOption);
+        }
     }
 };
 </script>
