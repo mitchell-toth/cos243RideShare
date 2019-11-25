@@ -7,7 +7,7 @@
   "license": "MIT",
   "scripts": {
     "ui-watch": "vue-cli-service serve",
-    "api-watch": "nodemon db.js",
+    "api-watch": "nodemon --ignore ./node_modules db.js",
 	"build": "vue-cli-service build",
     "lint": "vue-cli-service lint"
   },
