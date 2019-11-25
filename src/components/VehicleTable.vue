@@ -14,7 +14,7 @@
             <v-btn v-on:click="createVehicle" >Add a Vehicle</v-btn>
             <v-data-table
                     class="elevation-1"
-                    v-bind:headers="headers"
+                    v-bind:headers="headers_vehicles"
                     v-bind:items="vehicles"
                     v-bind:search="search">
                 <template v-slot:item.action="{ item }">
@@ -105,6 +105,15 @@
                     </v-card-title>
 
                     <v-card-text>
+                        <p>Drivers authorized for this vehicle:</p>
+                        <ul>
+                            <li v-for="(authorizedDriver, i) in authorizedDrivers" v-bind:key="i">
+                                {{ authorizedDriver.first_name }}
+                                {{ authorizedDriver.last_name }},
+                                {{ authorizedDriver.email }}
+                            </li>
+                        </ul>
+                        <br>
                         <driver-dropdown
                                 v-bind:selected-driver="selectedDriver.driver_id"
                                 v-on:selectedDriver="selectDriver"
@@ -155,7 +164,7 @@ export default {
     //prop, v-bind
     data: function() {
         return {
-            headers: [
+            headers_vehicles: [
                 { text: "Vehicle ID", value: "id" },
                 { text: "Make", value: "make" },
                 { text: "Model", value: "model" },
@@ -175,6 +184,13 @@ export default {
             selectedDriver: {
                 driver_id: ""
             },
+            authorizedDrivers: [{
+                id: 1,
+                first_name: "Mitchell",
+                last_name: "Toth",
+                phone: "614-429-7928",
+                email: "mitchell_toth@taylor.edu"
+            }],
             editingAVehicle: false,
             creatingAVehicle: false,
             authorizingAVehicle: false,
@@ -242,6 +258,8 @@ export default {
             this.editingAVehicle = false;
             this.authorizingAVehicle = true;
             this.selectedVehicle = item;
+            //let url = `authorizations/${this.selectedVehicle.id}?join=drivers`
+            //this.$axios.get(url).then()
             this.showDialog("Authorize Vehicle", "", "authorize");
         },
         saveChangesOfVehicle() {

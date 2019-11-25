@@ -123,6 +123,19 @@ const init = async () => {
 			}
 		},
 
+		// get all drivers authorized for a specific vehicle
+		{
+			method: 'GET',
+			path: '/authorizations/{vehicle_id}',
+			config: {description: 'Retrieve the authorized drivers for a vehicle'},
+			handler: (request) => {
+				let query = Authorization.query()
+					.where('vehicle_id', request.params['vehicle_id'])
+				query = getAndApplyRelations(request, query);
+				return query;
+			}
+		},
+
 		// authorize a driver
 		{
 			method: 'POST',
