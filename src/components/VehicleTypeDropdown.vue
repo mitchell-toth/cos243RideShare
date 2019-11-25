@@ -2,7 +2,7 @@
     <v-select
         :items="vehicleTypes"
         label="Select a Vehicle Type"
-        v-model="selectedOption.key"
+        v-model="key"
         v-on:change="selectVehicleType"
         solo
     ></v-select>
@@ -10,14 +10,23 @@
 
 <script>
 export default {
-    //emit an event w/ details upon change
-    //v-on:selected $emit(name of event like vehicle selected, payload)
+    props: ["selectedVehicleType"],
     data: function() {
         return {
             vehicleTypes: [],
             selectedOption: {
-                key: "",
+                key: this.key,
                 value: ""
+            }
+        }
+    },
+    computed: {
+        key: {
+            get: function() {
+                return this.selectedVehicleType;
+            },
+            set: function(value) {
+                this.selectedOption.key = value;
             }
         }
     },

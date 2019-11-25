@@ -2,7 +2,7 @@
     <v-select
             :items="vehicles"
             label="Select a Vehicle"
-            v-model="selectedOption.key"
+            v-model="key"
             v-on:change="selectVehicle"
             solo
     ></v-select>
@@ -10,12 +10,23 @@
 
 <script>
 export default {
+    props: ["selectedVehicle"],
     data: function() {
         return {
             vehicles: [],
             selectedOption: {
-                key: "",
+                key: this.key,
                 value: ""
+            }
+        }
+    },
+    computed: {
+        key: {
+            get: function() {
+                return this.selectedVehicle;
+            },
+            set: function(value) {
+                this.selectedOption.key = value;
             }
         }
     },

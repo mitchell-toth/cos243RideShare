@@ -3,17 +3,8 @@
     <div>
       <h4 class="display-1">Admin Stuff</h4>
 
-      <v-data-table
-        class="elevation-1"
-        v-bind:headers="headers"
-        v-bind:items="accounts"
-      >
-        <template v-slot:item.action="{ item }">
-          <v-icon small class="ml-2" @click="updateAccount(item)">
-            mdi-pencil
-          </v-icon>
-        </template>
-      </v-data-table>
+      <br>
+      <vehicle-table></vehicle-table>
       <br>
 
       <p>Add a new vehicle type:</p>
@@ -29,14 +20,8 @@
       </v-form>
 
       <br>
-      <vehicle-type-dropdown></vehicle-type-dropdown><br>
-      <vehicle-dropdown></vehicle-dropdown><br>
-      <driver-dropdown></driver-dropdown><br>
-      <ride-dropdown></ride-dropdown><br>
-      <state-dropdown></state-dropdown><br>
 
       <ride-table type-of-rides="Upcoming"></ride-table><br>
-      <vehicle-table></vehicle-table>
 
       <div class="text-xs-center">
         <v-dialog v-model="dialogVisible" width="500">
@@ -70,21 +55,11 @@
 </template>
 
 <script>
-import VehicleTypeDropdown from "../components/VehicleTypeDropdown";
-import VehicleDropdown from "../components/VehicleDropdown";
-import DriverDropdown from "../components/DriverDropdown";
-import RideDropdown from "../components/RideDropdown";
 import RideTable from "../components/RideTable";
 import VehicleTable from "../components/VehicleTable";
-import StateDropdown from "../components/StateDropdown";
 export default {
   name: "Accounts",
   components: {
-    StateDropdown,
-    VehicleDropdown,
-    VehicleTypeDropdown,
-    DriverDropdown,
-    RideDropdown,
     RideTable,
     VehicleTable
   },

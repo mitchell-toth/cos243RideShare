@@ -18,18 +18,21 @@
                     v-bind:items="vehicles"
                     v-bind:search="search">
                 <template v-slot:item.action="{ item }">
-                    <v-icon small class="ml-2" @click="editVehicle(item)">
+                    <v-icon small class="ml-2" title="Edit" @click="editVehicle(item)">
                         mdi-pencil
+                    </v-icon>
+                    <v-icon small class="ml-2" title="Authorize" @click="authorizeVehicle(item)">
+                        mdi-account-edit
                     </v-icon>
                 </template>
             </v-data-table>
         </v-card>
 
         <div class="text-xs-center">
-            <v-dialog v-model="dialogVisible" width="70%">
+            <v-dialog v-model="dialogVisible_createEdit" width="70%">
                 <v-card>
                     <v-card-title primary-title>
-                        {{ dialogHeader }}
+                        {{ dialogHeader_createEdit }}
                     </v-card-title>
 
                     <v-form v-model="valid">
@@ -45,6 +48,7 @@
                                     v-bind:rules="rules.required_string"
                             ></v-text-field>
                             <vehicle-type-dropdown
+                                    v-bind:selected-vehicle-type="selectedVehicle.vehicle_type_id"
                                     v-on:selectedVehicleType="selectVehicleType"
                             ></vehicle-type-dropdown>
                             <v-text-field
@@ -59,6 +63,7 @@
                                     v-bind:rules="rules.required_string"
                             ></v-text-field>
                             <state-dropdown
+                                    v-bind:selected-state="selectedVehicle.license_state"
                                     v-on:selectedState="selectState"
                             ></state-dropdown>
                             <v-text-field
@@ -84,10 +89,57 @@
 
                         <v-card-actions>
                             <v-spacer></v-spacer>
-                            <v-btn color="primary" text v-on:click="cancelChangesOfVehicle">Cancel</v-btn>
+                            <v-btn color="primary" text v-on:click="hideDialog('createEdit')">Cancel</v-btn>
                             <v-btn color="primary" v-bind:disabled="!valid" text v-on:click="saveChangesOfVehicle">Save</v-btn>
                         </v-card-actions>
                     </v-form>
+                </v-card>
+            </v-dialog>
+        </div>
+
+        <div class="text-xs-center">
+            <v-dialog v-model="dialogVisible_authorize" width="500">
+                <v-card>
+                    <v-card-title primary-title>
+                        {{ dialogHeader_authorize }}
+                    </v-card-title>
+
+                    <v-card-text>
+                        <driver-dropdown
+                                v-bind:selected-driver="selectedDriver.driver_id"
+                                v-on:selectedDriver="selectDriver"
+                        ></driver-dropdown>
+                    </v-card-text>
+
+                    <v-divider></v-divider>
+
+                    <!-- Include a list of drivers currently authorized for this vehicle in the below element -->
+                    <v-card-actions>
+                        <v-spacer></v-spacer>
+                        <v-btn color="primary" text v-on:click="hideDialog('authorize')">Cancel</v-btn>
+                        <v-btn color="primary" text v-on:click="saveChangesOfVehicle">Save</v-btn>
+                    </v-card-actions>
+                </v-card>
+            </v-dialog>
+        </div>
+
+        <div class="text-xs-center">
+            <v-dialog v-model="dialogVisible_successFail" width="500">
+                <v-card>
+                    <v-card-title primary-title>
+                        {{ dialogHeader_successFail }}
+                    </v-card-title>
+
+                    <v-card-text>
+                        {{ dialogText_successFail }}
+                    </v-card-text>
+
+                    <v-divider></v-divider>
+
+                    <v-card-actions>
+                        <v-spacer></v-spacer>
+                        <v-btn color="primary" text v-on:click="hideDialog('successFail')">Ok</v-btn>
+                    </v-card-actions>
                 </v-card>
             </v-dialog>
         </div>
@@ -97,8 +149,9 @@
 <script>
 import VehicleTypeDropdown from "./VehicleTypeDropdown";
 import StateDropdown from "./StateDropdown";
+import DriverDropdown from "./DriverDropdown";
 export default {
-    components: {StateDropdown, VehicleTypeDropdown},
+    components: {DriverDropdown, StateDropdown, VehicleTypeDropdown},
     //prop, v-bind
     data: function() {
         return {
@@ -118,35 +171,33 @@ export default {
             vehicles: [],
             search: "",
             selectedVehicle: {},
-            newVehicle: {
-                make: "",
-                model: "",
-                vehicle_type: "",
-                vehicle_type_id: "",
-                year: "",
-                color: "",
-                license_state: "",
-                state: "",
-                license_plate: "",
-                capacity: "",
-                mpg: "",
+            newVehicle: {make: "", model: "", vehicle_type: "", vehicle_type_id: "", year: "", color: "", license_state: "", state: "", license_plate: "", capacity: "", mpg: "",},
+            selectedDriver: {
+                driver_id: ""
             },
             editingAVehicle: false,
             creatingAVehicle: false,
+            authorizingAVehicle: false,
 
             valid: false,
             rules: {
                 required_string: [val => val !== undefined && val.length > 0 || "Required"],
                 required_number: [
-                    val => val !== undefined && val !== 0 || "Required",
                     val => val >= 0 || "Cannot be negative",
                     val => /\d+/.test(val) || "Must be a number"
                 ]
             },
 
             // Data to be displayed by the dialog.
-            dialogHeader: "<no dialogHeader>",
-            dialogVisible: false,
+            dialogHeader_createEdit: "<no dialogHeader>",
+            dialogVisible_createEdit: false,
+
+            dialogHeader_successFail: "<no dialogHeader>",
+            dialogText_successFail: "<no dialogText>",
+            dialogVisible_successFail: false,
+
+            dialogHeader_authorize: "<no dialogHeader>",
+            dialogVisible_authorize: false,
         }
     },
     mounted: function() {
@@ -175,43 +226,98 @@ export default {
         createVehicle() {
             this.creatingAVehicle = true;
             this.editingAVehicle = false;
+            this.authorizingAVehicle = false;
             this.selectedVehicle = this.newVehicle;
-            this.showDialog("Add a Vehicle")
+            this.showDialog("Add a Vehicle", "", "createEdit");
         },
         editVehicle(item) {
             this.creatingAVehicle = false;
             this.editingAVehicle = true;
+            this.authorizingAVehicle = false;
             this.selectedVehicle = item;
-            this.showDialog("Edit Vehicle");
+            this.showDialog("Edit Vehicle", "", "createEdit");
+        },
+        authorizeVehicle(item) {
+            this.creatingAVehicle = false;
+            this.editingAVehicle = false;
+            this.authorizingAVehicle = true;
+            this.selectedVehicle = item;
+            this.showDialog("Authorize Vehicle", "", "authorize");
         },
         saveChangesOfVehicle() {
-            this.selectedVehicle.year = parseInt(this.selectedVehicle.year);
-            this.selectedVehicle.capacity = parseInt(this.selectedVehicle.capacity);
-            this.selectedVehicle.mpg = parseFloat(this.selectedVehicle.mpg);
-            console.log(this.selectedVehicle);
+            const vehicle = {
+                make: this.selectedVehicle.make,
+                model: this.selectedVehicle.model,
+                color: this.selectedVehicle.color,
+                vehicle_type_id: this.selectedVehicle.vehicle_type_id,
+                capacity: parseInt(this.selectedVehicle.capacity),
+                mpg: parseFloat(this.selectedVehicle.mpg),
+                license_state: this.selectedVehicle.license_state,
+                license_plate: this.selectedVehicle.license_plate,
+                year: parseInt(this.selectedVehicle.year)
+            };
+            // edit the selected vehicle
             if (this.editingAVehicle) {
-                this.$axios.patch(`vehicles/${parseInt(this.selectedVehicle.id)}`, this.selectedVehicle)
-                    .then(result => {
-                        console.log(result);
-                }).catch(err => this.showDialog("Failed", `${err}. Please ensure that all fields have valid input`));
+                let url = `vehicles/${parseInt(this.selectedVehicle.id)}`;
+                this.$axios.patch(url, vehicle)
+                    .then((result) => {
+                        if (result.status === 200) {
+                            if (result.data.ok) {this.showDialog("Success", result.data.msge, "successFail");}
+                            else {this.showDialog("Sorry", result.data.msge, "successFail");}
+                        }
+                }).catch(err => this.showDialog("Failed", `${err}. Please ensure that all fields have valid input`, "successFail"));
             }
+            // create a new vehicle
             else if (this.creatingAVehicle) {
-                this.$axios.post("vehicles", this.selectedVehicle)
-                    .then(result => {
-                        console.log(result);
-                }).catch(err => this.showDialog("Failed", `${err}. Please ensure that all fields have valid input`));
+                this.$axios.post("vehicles", vehicle)
+                    .then((result) => {
+                        if (result.status === 200) {
+                            if (result.data.ok) {this.showDialog("Success", result.data.msge, "successFail");}
+                            else {this.showDialog("Sorry", result.data.msge, "successFail");}
+                        }
+                }).catch(err => this.showDialog("Failed", `${err}. Please ensure that all fields have valid input`, "successFail"));
+            }
+            // authorize a driver for the selected vehicle
+            else if (this.authorizingAVehicle) {
+                this.$axios.post("authorizations", {
+                    driver_id: this.selectedDriver.driver_id,
+                    vehicle_id: this.selectedVehicle.id
+                }).then((result) => {
+                        if (result.status === 200) {
+                            if (result.data.ok) {this.showDialog("Success", result.data.msge, "successFail");}
+                            else {this.showDialog("Sorry", result.data.msge, "successFail");}
+                        }
+                    }).catch(err => this.showDialog("Failed", `${err}. Please ensure that all fields have valid input`, "successFail"));
             }
         },
-        cancelChangesOfVehicle() {
-            this.hideDialog();
+        showDialog: function(header, text, type) {
+            if (type === "createEdit") {
+                this.dialogHeader_createEdit = header;
+                this.dialogVisible_createEdit = true;
+            }
+            else if (type === "successFail") {
+                this.dialogVisible_successFail = true;
+                this.dialogHeader_successFail = header;
+                this.dialogText_successFail = text;
+            }
+            else if (type === "authorize") {
+                this.dialogVisible_authorize = true;
+                this.dialogHeader_authorize = header;
+            }
+            else {console.warn("Unrecognized dialog type parameter passed");}
         },
-        showDialog: function(header) {
-            this.dialogHeader = header;
-            this.dialogVisible = true;
-        },
-        hideDialog: function() {
-            this.dialogVisible = false;
-            this.selectedVehicle = {};
+        hideDialog: function(type) {
+            if (type === "createEdit") {
+                this.dialogVisible_createEdit = false;
+                this.selectedVehicle = {};
+            }
+            else if (type === "successFail") {
+                this.dialogVisible_successFail = false;
+            }
+            else if (type === "authorize") {
+                this.dialogVisible_authorize = false;
+            }
+            else {console.warn("Unrecognized dialog type parameter passed");}
         },
         selectVehicleType: function(vehicle_type_option) {
             this.selectedVehicle.vehicle_type_id = vehicle_type_option.key;
@@ -220,6 +326,9 @@ export default {
         selectState: function(state_option) {
             this.selectedVehicle.license_state = state_option.key;
             this.selectedVehicle.state = state_option.value;
+        },
+        selectDriver: function(driver_option) {
+            this.selectedDriver.driver_id = driver_option.key;
         }
     }
 };

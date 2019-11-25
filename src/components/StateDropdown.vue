@@ -2,7 +2,7 @@
     <v-select
             :items="states"
             label="Select a State"
-            v-model="selectedOption.key"
+            v-model="key"
             v-on:change="selectState"
             solo
     ></v-select>
@@ -10,12 +10,23 @@
 
 <script>
 export default {
+    props: ["selectedState"],
     data: function() {
         return {
             states: [],
             selectedOption: {
-                key: "",
+                key: this.key,
                 value: ""
+            },
+        }
+    },
+    computed: {
+        key: {
+            get: function() {
+                return this.selectedState;
+            },
+            set: function(value) {
+                this.selectedOption.key = value;
             }
         }
     },
@@ -31,6 +42,9 @@ export default {
         selectState: function() {
             this.selectedOption.value = event.target.innerText;
             this.$emit('selectedState', this.selectedOption);
+        },
+        changeKey: function(key) {
+            console.log(key);
         }
     }
 };

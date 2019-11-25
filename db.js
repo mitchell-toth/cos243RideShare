@@ -27,6 +27,7 @@ const State = require('./models/State');
 const Passenger = require('./models/Passenger');
 const Ride = require('./models/Ride');
 const Admin = require('./models/Admin');
+const Authorization = require('./models/Authorization');
 
 
 //     RESTful API routes and handlers
@@ -121,6 +122,36 @@ const init = async () => {
 				}
 			}
 		},
+
+		// authorize a driver
+		{
+			method: 'POST',
+			path: '/authorizations',
+			config: {
+				description: 'Authorize a driver',
+				validate: {
+					payload: Joi.object({
+						driver_id: Joi.number().integer().required(),
+						vehicle_id: Joi.number().integer().required(),
+					})
+				}
+			},
+			handler: async (request) => {
+				const existingAuth = await Authorization.query()
+					.where("driver_id", request.payload.driver_id)
+					.where("vehicle_id", request.payload.vehicle_id)
+					.first();
+				if (existingAuth) {
+					return {ok: false, msge: `This driver is already authorized to drive this vehicle`};
+				}
+				const newAuth = await Authorization.query().insert(request.payload).returning(["driver_id", "vehicle_id"]);
+				if (newAuth) {
+					return {ok: true, msge: `Authorized driver`};
+				} else {
+					return {ok: false, msge: `Couldn't authorize driver`};
+				}
+			}
+		},
 		
 		// get all vehicles
 		{
@@ -156,31 +187,25 @@ const init = async () => {
 				description: 'Update a specified vehicle',
 				validate: {
 					params: Joi.object({
-						vehicle_id: Joi.number().integer().required()
+						vehicle_id: Joi.number().integer()
 					}),
+					/*
 					payload: Joi.object({
-						make: Joi.string().required(),
-						model: Joi.string().required(),
-						vehicle_type_id: Joi.number().integer().required(),
-						year: Joi.number().integer().required(),
-						color: Joi.string(),
-						license_state: Joi.string().regex(/\w{2}/).required(),
-						license_plate: Joi.string().required(),
-						capacity: Joi.number().integer().required(),
-						mpg: Joi.number().required(),
+						color: Joi.string()
 					})
+					 */
 				}
 			},
 			handler: async (request) => {
 				let updatedVehicle = await Vehicle.query()
 					.where('id', request.params['vehicle_id'])
 					.update(request.payload);
-				if (updatedVehicle) {return {ok: true, msg: "Vehicle has been updated"};}
-				else {return {ok: false, msg: "Failed to update vehicle"};}
+				if (updatedVehicle) {return {ok: true, msge: "Vehicle has been updated"};}
+				else {return {ok: false, msge: "Failed to update vehicle"};}
 			}
 		},
 
-		// update a specific vehicle
+		// create a new vehicle
 		{
 			method: 'POST',
 			path: '/vehicles',
@@ -203,7 +228,6 @@ const init = async () => {
 				 */
 			},
 			handler: async (request) => {
-				console.log(request.payload);
 				const existingVehicle = await Vehicle.query()
 					.where("license_plate", request.payload.license_plate)
 					.where("license_state", request.payload.license_state)
@@ -215,7 +239,7 @@ const init = async () => {
 				if (newVehicle) {
 					return {ok: true, msge: `Added vehicle '${request.payload.make} ${request.payload.model} ${request.payload.year} (${request.payload.license_plate})'`};
 				} else {
-					return {ok: false, msge: `Couldn't register driver with email '${request.payload.email}'`};
+					return {ok: false, msge: `Couldn't add vehicle '${request.payload.make} ${request.payload.model} ${request.payload.year} (${request.payload.license_plate})'`};
 				}
 			}
 		},

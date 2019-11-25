@@ -2,7 +2,7 @@
     <v-select
             :items="drivers"
             label="Select a Registered Driver"
-            v-model="selectedOption.key"
+            v-model="key"
             v-on:change="selectDriver"
             solo
     ></v-select>
@@ -10,12 +10,23 @@
 
 <script>
 export default {
+    props: ["selectedDriver"],
     data: function() {
         return {
             drivers: [],
             selectedOption: {
                 key: "",
                 value: ""
+            }
+        }
+    },
+    computed: {
+        key: {
+            get: function() {
+                return this.selectedRide;
+            },
+            set: function(value) {
+                this.selectedOption.key = value;
             }
         }
     },
