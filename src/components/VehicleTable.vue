@@ -13,10 +13,10 @@
             </v-card-title>
             <v-btn v-on:click="createVehicle" >Add a Vehicle</v-btn>
             <v-data-table
-                    class="elevation-1"
-                    v-bind:headers="headers_vehicles"
-                    v-bind:items="vehicles"
-                    v-bind:search="search">
+                class="elevation-1"
+                v-bind:headers="headers_vehicles"
+                v-bind:items="vehicles"
+                v-bind:search="search">
                 <template v-slot:item.action="{ item }">
                     <v-icon small class="ml-2" title="Edit" @click="editVehicle(item)">
                         mdi-pencil
@@ -98,26 +98,20 @@
         </div>
 
         <div class="text-xs-center">
-            <v-dialog v-model="dialogVisible_authorize" width="500">
+            <v-dialog v-model="dialogVisible_authorize" width="70%">
                 <v-card>
                     <v-card-title primary-title>
                         {{ dialogHeader_authorize }}
                     </v-card-title>
 
                     <v-card-text>
-                        <p>Drivers authorized for this vehicle:</p>
-                        <ul>
-                            <li v-for="(authorizedDriver, i) in authorizedDrivers" v-bind:key="i">
-                                {{ authorizedDriver.first_name }}
-                                {{ authorizedDriver.last_name }},
-                                {{ authorizedDriver.email }}
-                            </li>
-                        </ul>
-                        <br>
-                        <driver-dropdown
-                                v-bind:selected-driver="selectedDriver.driver_id"
-                                v-on:selectedDriver="selectDriver"
-                        ></driver-dropdown>
+                        <v-data-table
+                            class="elevation-1"
+                            v-model="authorizedDrivers"
+                            v-bind:headers="headers_authorization"
+                            v-bind:items="drivers"
+                            show-select>
+                        </v-data-table>
                     </v-card-text>
 
                     <v-divider></v-divider>
@@ -158,9 +152,8 @@
 <script>
 import VehicleTypeDropdown from "./VehicleTypeDropdown";
 import StateDropdown from "./StateDropdown";
-import DriverDropdown from "./DriverDropdown";
 export default {
-    components: {DriverDropdown, StateDropdown, VehicleTypeDropdown},
+    components: {StateDropdown, VehicleTypeDropdown},
     //prop, v-bind
     data: function() {
         return {
@@ -184,13 +177,15 @@ export default {
             selectedDriver: {
                 driver_id: ""
             },
-            authorizedDrivers: [{
-                id: 1,
-                first_name: "Mitchell",
-                last_name: "Toth",
-                phone: "614-429-7928",
-                email: "mitchell_toth@taylor.edu"
-            }],
+            headers_authorization: [
+                { text: "Driver ID", value: "driver_id" },
+                { text: "First Name", value: "first_name" },
+                { text: "Last Name", value: "last_name" },
+                { text: "Phone", value: "phone" },
+                { text: "Email", value: "email" },
+            ],
+            drivers: [],
+            authorizedDrivers: [],
             editingAVehicle: false,
             creatingAVehicle: false,
             authorizingAVehicle: false,
@@ -232,7 +227,7 @@ export default {
                 capacity: vehicle.capacity,
                 mpg: vehicle.mpg,
             }));
-        });
+        }).catch(err => console.error(`Something went wrong loading in the vehicles for the vehicle table. ${err}`));
     },
     methods: {
         capitalize(str) {
@@ -240,26 +235,41 @@ export default {
             return str.charAt(0).toUpperCase() + str.slice(1);
         },
         createVehicle() {
-            this.creatingAVehicle = true;
-            this.editingAVehicle = false;
-            this.authorizingAVehicle = false;
+            this.creatingAVehicle = true; this.editingAVehicle = false; this.authorizingAVehicle = false;
             this.selectedVehicle = this.newVehicle;
             this.showDialog("Add a Vehicle", "", "createEdit");
         },
         editVehicle(item) {
-            this.creatingAVehicle = false;
-            this.editingAVehicle = true;
-            this.authorizingAVehicle = false;
+            this.creatingAVehicle = false; this.editingAVehicle = true; this.authorizingAVehicle = false;
             this.selectedVehicle = item;
             this.showDialog("Edit Vehicle", "", "createEdit");
         },
         authorizeVehicle(item) {
-            this.creatingAVehicle = false;
-            this.editingAVehicle = false;
-            this.authorizingAVehicle = true;
+            this.creatingAVehicle = false; this.editingAVehicle = false; this.authorizingAVehicle = true;
             this.selectedVehicle = item;
-            //let url = `authorizations/${this.selectedVehicle.id}?join=drivers`
-            //this.$axios.get(url).then()
+            this.drivers = [];
+            this.authorizedDrivers = [];
+            this.$axios.get("drivers").then(response => {
+                this.drivers = response.data.map(driver => ({
+                    driver_id: driver.id,
+                    first_name: driver.first_name,
+                    last_name: driver.last_name,
+                    phone: driver.phone,
+                    email: driver.email,
+                }));
+                let url = `authorizations/${this.selectedVehicle.id}?join=drivers`;
+                this.$axios.get(url).then(response => {
+                    let authorizations = [];
+                    for (let i=0; i<response.data.length; i++) {
+                        authorizations.push(response.data[i].driver_id)
+                    }
+                    for (let i=0; i<this.drivers.length; i++) {
+                        if (authorizations.includes(this.drivers[i].driver_id)) {
+                            this.authorizedDrivers.push(this.drivers[i]);
+                        }
+                    }
+                }).catch(err => this.showDialog("Failed", `${err}. Something went wrong`, "successFail"));
+            }).catch(err => this.showDialog("Failed", `${err}. Something went wrong`, "successFail"));
             this.showDialog("Authorize Vehicle", "", "authorize");
         },
         saveChangesOfVehicle() {
@@ -278,34 +288,44 @@ export default {
             if (this.editingAVehicle) {
                 let url = `vehicles/${parseInt(this.selectedVehicle.id)}`;
                 this.$axios.patch(url, vehicle)
-                    .then((result) => {
-                        if (result.status === 200) {
-                            if (result.data.ok) {this.showDialog("Success", result.data.msge, "successFail");}
-                            else {this.showDialog("Sorry", result.data.msge, "successFail");}
+                    .then((response) => {
+                        if (response.status === 200) {
+                            if (response.data.ok) {this.showDialog("Success", response.data.msge, "successFail");}
+                            else {this.showDialog("Sorry", response.data.msge, "successFail");}
                         }
                 }).catch(err => this.showDialog("Failed", `${err}. Please ensure that all fields have valid input`, "successFail"));
             }
             // create a new vehicle
             else if (this.creatingAVehicle) {
                 this.$axios.post("vehicles", vehicle)
-                    .then((result) => {
-                        if (result.status === 200) {
-                            if (result.data.ok) {this.showDialog("Success", result.data.msge, "successFail");}
-                            else {this.showDialog("Sorry", result.data.msge, "successFail");}
+                    .then((response) => {
+                        if (response.status === 200) {
+                            if (response.data.ok) {this.showDialog("Success", response.data.msge, "successFail");}
+                            else {this.showDialog("Sorry", response.data.msge, "successFail");}
                         }
                 }).catch(err => this.showDialog("Failed", `${err}. Please ensure that all fields have valid input`, "successFail"));
             }
             // authorize a driver for the selected vehicle
             else if (this.authorizingAVehicle) {
-                this.$axios.post("authorizations", {
-                    driver_id: this.selectedDriver.driver_id,
-                    vehicle_id: this.selectedVehicle.id
-                }).then((result) => {
-                        if (result.status === 200) {
-                            if (result.data.ok) {this.showDialog("Success", result.data.msge, "successFail");}
-                            else {this.showDialog("Sorry", result.data.msge, "successFail");}
-                        }
-                    }).catch(err => this.showDialog("Failed", `${err}. Please ensure that all fields have valid input`, "successFail"));
+                for (let i=0; i<this.authorizedDrivers.length; i++) {
+                    this.authorizedDrivers[i].vehicle_id = this.selectedVehicle.id;
+                }
+                let url = `authorizations/${parseInt(this.selectedVehicle.id)}`;
+                this.$axios.delete(url).then(response => {
+                    if (response.data.ok) {
+                        this.$axios.post("authorizations", this.authorizedDrivers).then((response) => {
+                            if (response.status === 200) {
+                                if (response.data.ok) {
+                                    this.showDialog("Success", response.data.msge, "successFail");
+                                    this.hideDialog("authorize");
+                                } else {
+                                    this.showDialog("Sorry", response.data.msge, "successFail");
+                                }
+                            }
+                        }).catch(err => this.showDialog("Failed", `${err}. Please ensure that all fields have valid input`, "successFail"));
+                    }
+                    else { this.showDialog("Failed", `Something went wrong`, "successFail") }
+                }).catch(err => this.showDialog("Failed", `${err}. Something went wrong`, "successFail"));
             }
         },
         showDialog: function(header, text, type) {

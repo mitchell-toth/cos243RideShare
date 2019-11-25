@@ -142,27 +142,58 @@ const init = async () => {
 			path: '/authorizations',
 			config: {
 				description: 'Authorize a driver',
+			},
+			handler: async (request) => {
+				if (Array.isArray(request.payload)) {
+					for (let i=0; i<request.payload.length; i++) {
+						let newAuth = await Authorization.query().insert({
+							driver_id: request.payload[i].driver_id,
+							vehicle_id: request.payload[i].vehicle_id,
+						}).returning(["driver_id", "vehicle_id"]);
+						if (!newAuth) { return {ok: false, msge: `Couldn't authorize driver. Failed with payload object ${request.payload[i]}`}; }
+					}
+					return {ok: true, msge: `Successfully changed authorization for this vehicle`};
+				}
+				else {
+					const existingAuth = await Authorization.query()
+						.where("driver_id", request.payload.driver_id)
+						.where("vehicle_id", request.payload.vehicle_id);
+					if (existingAuth) {
+						return {ok: false, msge: `This driver is already authorized to drive this vehicle`};
+					}
+					const newAuth = await Authorization.query().insert(request.payload).returning(["driver_id", "vehicle_id"]);
+					if (newAuth) {
+						return {ok: true, msge: `Authorized driver`};
+					} else {
+						return {ok: false, msge: `Couldn't authorize driver`};
+					}
+				}
+			}
+		},
+
+		// de-authorize a driver
+		{
+			method: 'DELETE',
+			path: '/authorizations/{vehicle_id}',
+			config: {
+				description: 'Authorize a driver',
 				validate: {
-					payload: Joi.object({
-						driver_id: Joi.number().integer().required(),
+					params: Joi.object({
 						vehicle_id: Joi.number().integer().required(),
 					})
 				}
 			},
 			handler: async (request) => {
-				const existingAuth = await Authorization.query()
-					.where("driver_id", request.payload.driver_id)
-					.where("vehicle_id", request.payload.vehicle_id)
+				const authorizationsOnThisVehicle = await Authorization.query()
+					.where("vehicle_id", request.params.vehicle_id)
 					.first();
-				if (existingAuth) {
-					return {ok: false, msge: `This driver is already authorized to drive this vehicle`};
+				if (!authorizationsOnThisVehicle) {
+					return {ok: true, msge: `No driver(s) to de-authorize for vehicle ID ${request.params.vehicle_id}`};
 				}
-				const newAuth = await Authorization.query().insert(request.payload).returning(["driver_id", "vehicle_id"]);
-				if (newAuth) {
-					return {ok: true, msge: `Authorized driver`};
-				} else {
-					return {ok: false, msge: `Couldn't authorize driver`};
-				}
+				await Authorization.query()
+					.delete()
+					.where("vehicle_id", request.params.vehicle_id);
+				return {ok: true, msge: `De-authorized driver(s) for vehicle ID ${request.params.vehicle_id}`};
 			}
 		},
 		
