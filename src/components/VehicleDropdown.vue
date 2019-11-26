@@ -43,7 +43,7 @@ export default {
             if (typeof str !== 'string') return str;
             return str.charAt(0).toUpperCase() + str.slice(1);
         },
-        selectVehicle: function() {
+        selectVehicle() {
             this.selectedOption.value = event.target.innerText;
             this.$emit('selectedVehicle', this.selectedOption);
         }

@@ -39,7 +39,7 @@ export default {
         });
     },
     methods: {
-        selectVehicleType: function () {
+        selectVehicleType() {
             this.selectedOption.value = event.target.innerText;
             this.$emit('selectedVehicleType', this.selectedOption);
         }

@@ -43,7 +43,7 @@ export default {
             let date = new Date(str);
             return `${date.getMonth()}-${date.getDate()}-${date.getFullYear()}`;
         },
-        selectRide: function() {
+        selectRide() {
             this.selectedOption.value = event.target.innerText;
             this.$emit('selectedRide', this.selectedOption);
         }

@@ -11,17 +11,17 @@
                         hide-details
                 ></v-text-field>
             </v-card-title>
-            <v-btn v-on:click="createVehicle" >Add a Vehicle</v-btn>
+            <v-btn color="primary" style="margin-left:8px" v-on:click="createVehicle" >Add a Vehicle</v-btn>
             <v-data-table
                 class="elevation-1"
                 v-bind:headers="headers_vehicles"
                 v-bind:items="vehicles"
                 v-bind:search="search">
                 <template v-slot:item.action="{ item }">
-                    <v-icon small class="ml-2" title="Edit" @click="editVehicle(item)">
+                    <v-icon color="primary" small class="ml-2" title="Edit" @click="editVehicle(item)">
                         mdi-pencil
                     </v-icon>
-                    <v-icon small class="ml-2" title="Authorize" @click="authorizeVehicle(item)">
+                    <v-icon color="primary" small class="ml-2" title="Authorize" @click="authorizeVehicle(item)">
                         mdi-account-edit
                     </v-icon>
                 </template>
@@ -89,7 +89,7 @@
 
                         <v-card-actions>
                             <v-spacer></v-spacer>
-                            <v-btn color="primary" text v-on:click="hideDialog('createEdit')">Cancel</v-btn>
+                            <v-btn color="primary" text v-on:click="cancelChangesOfVehicle">Cancel</v-btn>
                             <v-btn color="primary" v-bind:disabled="!valid" text v-on:click="saveChangesOfVehicle">Save</v-btn>
                         </v-card-actions>
                     </v-form>
@@ -290,7 +290,10 @@ export default {
                 this.$axios.patch(url, vehicle)
                     .then((response) => {
                         if (response.status === 200) {
-                            if (response.data.ok) {this.showDialog("Success", response.data.msge, "successFail");}
+                            if (response.data.ok) {
+                                this.showDialog("Success", response.data.msge, "successFail");
+                                this.hideDialog("createEdit");
+                            }
                             else {this.showDialog("Sorry", response.data.msge, "successFail");}
                         }
                 }).catch(err => this.showDialog("Failed", `${err}. Please ensure that all fields have valid input`, "successFail"));
@@ -300,7 +303,10 @@ export default {
                 this.$axios.post("vehicles", vehicle)
                     .then((response) => {
                         if (response.status === 200) {
-                            if (response.data.ok) {this.showDialog("Success", response.data.msge, "successFail");}
+                            if (response.data.ok) {
+                                this.showDialog("Success", response.data.msge, "successFail");
+                                this.hideDialog("createEdit");
+                            }
                             else {this.showDialog("Sorry", response.data.msge, "successFail");}
                         }
                 }).catch(err => this.showDialog("Failed", `${err}. Please ensure that all fields have valid input`, "successFail"));
@@ -328,7 +334,10 @@ export default {
                 }).catch(err => this.showDialog("Failed", `${err}. Something went wrong`, "successFail"));
             }
         },
-        showDialog: function(header, text, type) {
+        cancelChangesOfVehicle() {
+            this.hideDialog('createEdit');
+        },
+        showDialog(header, text, type) {
             if (type === "createEdit") {
                 this.dialogHeader_createEdit = header;
                 this.dialogVisible_createEdit = true;
@@ -344,7 +353,7 @@ export default {
             }
             else {console.warn("Unrecognized dialog type parameter passed");}
         },
-        hideDialog: function(type) {
+        hideDialog(type) {
             if (type === "createEdit") {
                 this.dialogVisible_createEdit = false;
                 this.selectedVehicle = {};
@@ -357,15 +366,15 @@ export default {
             }
             else {console.warn("Unrecognized dialog type parameter passed");}
         },
-        selectVehicleType: function(vehicle_type_option) {
+        selectVehicleType(vehicle_type_option) {
             this.selectedVehicle.vehicle_type_id = vehicle_type_option.key;
             this.selectedVehicle.vehicle_type = vehicle_type_option.value;
         },
-        selectState: function(state_option) {
+        selectState(state_option) {
             this.selectedVehicle.license_state = state_option.key;
             this.selectedVehicle.state = state_option.value;
         },
-        selectDriver: function(driver_option) {
+        selectDriver(driver_option) {
             this.selectedDriver.driver_id = driver_option.key;
         }
     }

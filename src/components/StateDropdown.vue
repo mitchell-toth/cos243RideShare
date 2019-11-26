@@ -39,13 +39,10 @@ export default {
         });
     },
     methods: {
-        selectState: function() {
+        selectState() {
             this.selectedOption.value = event.target.innerText;
             this.$emit('selectedState', this.selectedOption);
         },
-        changeKey: function(key) {
-            console.log(key);
-        }
     }
 };
 </script>
