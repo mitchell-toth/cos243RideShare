@@ -35,7 +35,12 @@
                 <v-card>
                     <v-card-title primary-title>
                         {{ dialogHeader_details }}
+                        <v-spacer></v-spacer>
+                        <v-card-actions>
+                            <v-btn color="primary" text v-on:click="hideDialog('details')">Close</v-btn>
+                        </v-card-actions>
                     </v-card-title>
+
 
                     <v-card-text>
                         <h3>Drivers</h3>
@@ -52,14 +57,26 @@
                                 v-bind:items="passengers">
                         </v-data-table>
                     </v-card-text>
+                </v-card>
+            </v-dialog>
+        </div>
+
+        <div class="text-xs-center">
+            <v-dialog v-model="dialogVisible_successFail" width="500">
+                <v-card>
+                    <v-card-title primary-title>
+                        {{ dialogHeader_successFail }}
+                    </v-card-title>
+
+                    <v-card-text>
+                        {{ dialogText_successFail }}
+                    </v-card-text>
 
                     <v-divider></v-divider>
 
-                    <!-- Include a list of drivers currently authorized for this vehicle in the below element -->
                     <v-card-actions>
                         <v-spacer></v-spacer>
-                        <v-btn color="primary" text v-on:click="hideDialog('details')">Cancel</v-btn>
-                        <v-btn color="primary" text v-on:click="saveChangesOfRide">Save</v-btn>
+                        <v-btn color="primary" text v-on:click="hideDialog('successFail')">Ok</v-btn>
                     </v-card-actions>
                 </v-card>
             </v-dialog>
@@ -97,7 +114,11 @@ export default {
                 { text: "Email", value: "email" },
             ],
             dialogVisible_details: false,
-            dialogHeader_details: "<no dialogHeader>"
+            dialogHeader_details: "<no dialogHeader>",
+
+            dialogHeader_successFail: "<no dialogHeader>",
+            dialogText_successFail: "<no dialogText>",
+            dialogVisible_successFail: false,
         }
     },
     mounted: function() {
@@ -126,11 +147,19 @@ export default {
                 this.dialogHeader_details = header;
                 this.dialogVisible_details = true;
             }
+            else if (type === "successFail") {
+                this.dialogVisible_successFail = true;
+                this.dialogHeader_successFail = header;
+                this.dialogText_successFail = text;
+            }
             else {console.warn("Unrecognized dialog type parameter passed");}
         },
         hideDialog(type) {
             if (type === "details") {
                 this.dialogVisible_details = false;
+            }
+            else if (type === "successFail") {
+                this.dialogVisible_successFail = false;
             }
             else {console.warn("Unrecognized dialog type parameter passed");}
         },
@@ -152,24 +181,31 @@ export default {
             console.log(item);
         },
         showRideDetails(item) {
-            console.log(item);
-            this.$axios.get("drivers").then(response => {
-                this.drivers = response.data.map(driver => ({
-                    user_id: driver.id,
-                    first_name: driver.first_name,
-                    last_name: driver.last_name,
-                    phone: driver.phone,
-                    email: driver.email,
-                }));
+            this.drivers = [];
+            this.passengers = [];
+            this.$axios.get(`driversRides/${item.id}?join=driver`).then(response => {
+                for (let i=0; i<response.data.length; i++) {
+                    let driver = response.data[i].driver;
+                    this.drivers.push({
+                        user_id: driver.id,
+                        first_name: driver.first_name,
+                        last_name: driver.last_name,
+                        phone: driver.phone,
+                        email: driver.email,
+                    });
+                }
             }).catch(err => this.showDialog("Failed", `${err}. Something went wrong`, "successFail"));
-            this.$axios.get("passengers").then(response => {
-                this.passengers = response.data.map(passenger => ({
-                    user_id: passenger.id,
-                    first_name: passenger.first_name,
-                    last_name: passenger.last_name,
-                    phone: passenger.phone,
-                    email: passenger.email,
-                }));
+            this.$axios.get(`passengersRides/${item.id}?join=passenger`).then(response => {
+                for (let i=0; i<response.data.length; i++) {
+                    let passenger = response.data[i].passenger;
+                    this.passengers.push({
+                        user_id: passenger.id,
+                        first_name: passenger.first_name,
+                        last_name: passenger.last_name,
+                        phone: passenger.phone,
+                        email: passenger.email,
+                    });
+                }
             }).catch(err => this.showDialog("Failed", `${err}. Something went wrong`, "successFail"));
             this.showDialog("Ride Details", "", "details");
         }

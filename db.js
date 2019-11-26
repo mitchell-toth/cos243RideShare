@@ -20,11 +20,13 @@ Model.knex(knex);
 
 // Models
 const Driver = require('./models/Driver');
+const Drivers = require('./models/Drivers');
 const Vehicle = require('./models/Vehicle');
 const VehicleType = require('./models/VehicleType');
 const Location = require('./models/Location');
 const State = require('./models/State');
 const Passenger = require('./models/Passenger');
+const Passengers = require('./models/Passengers');
 const Ride = require('./models/Ride');
 const Admin = require('./models/Admin');
 const Authorization = require('./models/Authorization');
@@ -123,14 +125,41 @@ const init = async () => {
 			}
 		},
 
+		// get all drivers assigned to drive for a specific ride
+		{
+			method: 'GET',
+			path: '/driversRides/{ride_id}',
+			config: {
+				description: 'Retrieve the drivers assigned to a ride',
+				validate: {
+					params: Joi.object({
+						ride_id: Joi.number().integer().required(),
+					})
+				}
+			},
+			handler: (request) => {
+				let query = Drivers.query()
+					.where('ride_id', request.params['ride_id'])
+				query = getAndApplyRelations(request, query);
+				return query;
+			}
+		},
+
 		// get all drivers authorized for a specific vehicle
 		{
 			method: 'GET',
 			path: '/authorizations/{vehicle_id}',
-			config: {description: 'Retrieve the authorized drivers for a vehicle'},
+			config: {
+				description: 'Retrieve the authorized drivers for a vehicle',
+				validate: {
+					params: Joi.object({
+						vehicle_id: Joi.number().integer().required(),
+					})
+				}
+			},
 			handler: (request) => {
 				let query = Authorization.query()
-					.where('vehicle_id', request.params['vehicle_id'])
+					.where('vehicle_id', request.params['vehicle_id']);
 				query = getAndApplyRelations(request, query);
 				return query;
 			}
@@ -203,7 +232,8 @@ const init = async () => {
 			path: '/vehicles',
 			config: {description: 'Retrieve all vehicles'},
 			handler: (request) => {
-				let query = Vehicle.query();
+				let query = Vehicle.query()
+					.orderBy("id", "asc");
 				query = getAndApplyRelations(request, query);
 				return query;
 			}
@@ -233,11 +263,17 @@ const init = async () => {
 					params: Joi.object({
 						vehicle_id: Joi.number().integer()
 					}),
-					/*
 					payload: Joi.object({
-						color: Joi.string()
-					})
-					 */
+						make: Joi.string().required(),
+						model: Joi.string().required(),
+						color: Joi.string().required(),
+						vehicle_type_id: Joi.number().integer().required(),
+						capacity: Joi.number().integer().required(),
+						mpg: Joi.number().required(),
+						license_state: Joi.string().regex(/\w{2}/).required(),
+						license_plate: Joi.string().required(),
+						year: Joi.number().integer().required()
+					}).options({ allowUnknown: true})
 				}
 			},
 			handler: async (request) => {
@@ -255,21 +291,19 @@ const init = async () => {
 			path: '/vehicles',
 			config: {
 				description: 'Create a new vehicle',
-				/*
 				validate: {
 					payload: Joi.object({
-						//make: Joi.string().required(),
-						//model: Joi.string().required(),
-						//vehicle_type_id: Joi.number().integer().required(),
-						//year: Joi.number().integer().required(),
-						//color: Joi.string(),
-						//license_state: Joi.string().regex(/\w{2}/).required(),
-						//license_plate: Joi.string().required(),
-						//capacity: Joi.number().integer().required(),
-						//mpg: Joi.number().required(),
-					})
+						make: Joi.string().required(),
+						model: Joi.string().required(),
+						vehicle_type_id: Joi.number().integer().required(),
+						year: Joi.number().integer().required(),
+						color: Joi.string().required(),
+						license_state: Joi.string().regex(/\w{2}/).required(),
+						license_plate: Joi.string().required(),
+						capacity: Joi.number().integer().required(),
+						mpg: Joi.number().required(),
+					}).options({ allowUnknown: true})
 				}
-				 */
 			},
 			handler: async (request) => {
 				const existingVehicle = await Vehicle.query()
@@ -380,6 +414,26 @@ const init = async () => {
 				let query = Passenger.query()
 					.where('id', request.params['passenger_id'])
 					.first();
+				query = getAndApplyRelations(request, query);
+				return query;
+			}
+		},
+
+		// get all passengers assigned to a specific ride
+		{
+			method: 'GET',
+			path: '/passengersRides/{ride_id}',
+			config: {
+				description: 'Retrieve the passengers assigned to a ride',
+				validate: {
+					params: Joi.object({
+						ride_id: Joi.number().integer().required(),
+					})
+				}
+			},
+			handler: (request) => {
+				let query = Passengers.query()
+					.where('ride_id', request.params['ride_id'])
 				query = getAndApplyRelations(request, query);
 				return query;
 			}

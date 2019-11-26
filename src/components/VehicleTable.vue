@@ -110,13 +110,13 @@
                             v-model="authorizedDrivers"
                             v-bind:headers="headers_authorization"
                             v-bind:items="drivers"
+                            item-key="driver_id"
                             show-select>
                         </v-data-table>
                     </v-card-text>
 
                     <v-divider></v-divider>
 
-                    <!-- Include a list of drivers currently authorized for this vehicle in the below element -->
                     <v-card-actions>
                         <v-spacer></v-spacer>
                         <v-btn color="primary" text v-on:click="hideDialog('authorize')">Cancel</v-btn>
@@ -376,7 +376,7 @@ export default {
         },
         selectDriver(driver_option) {
             this.selectedDriver.driver_id = driver_option.key;
-        }
+        },
     }
 };
 </script>
