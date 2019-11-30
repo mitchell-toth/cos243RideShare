@@ -371,7 +371,6 @@ const init = async () => {
 				let query = Ride.query()
 					.orderBy([{column: 'date', order: 'asc'}, {column: 'time', order: 'asc'}]);
 				if (request.query.type === "upcoming") {
-					console.log("Got in here");
 					query.where('date', '>=', new Date())
 				}
 				query = getAndApplyRelations(request, query);

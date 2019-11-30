@@ -1,7 +1,3 @@
--- Mitchell Toth, Drew Anderson
--- COS243
-
-
 create table if not exists driver
 (
 	id serial not null

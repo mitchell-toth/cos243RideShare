@@ -154,7 +154,6 @@ import VehicleTypeDropdown from "./VehicleTypeDropdown";
 import StateDropdown from "./StateDropdown";
 export default {
     components: {StateDropdown, VehicleTypeDropdown},
-    //prop, v-bind
     data: function() {
         return {
             headers_vehicles: [
