@@ -253,6 +253,57 @@ const init = async () => {
 			}
 		},
 
+		// create a new vehicle
+		{
+			method: 'POST',
+			path: '/vehicles',
+			config: {
+				description: 'Create a new vehicle',
+				validate: {
+					payload: Joi.object({
+						make: Joi.string().required(),
+						model: Joi.string().required(),
+						vehicle_type_id: Joi.number().integer().required(),
+						vehicle_type: Joi.string(),
+						year: Joi.number().integer().required(),
+						color: Joi.string().required(),
+						license_state: Joi.string().regex(/\w{2}/).required(),
+						license_plate: Joi.string().required(),
+						capacity: Joi.number().integer().required(),
+						mpg: Joi.number().required(),
+					}).options({ allowUnknown: true})
+				}
+			},
+			handler: async (request) => {
+				if (request.payload.vehicle_type_id === -1) {
+					const existingVehicleType = await VehicleType.query()
+						.where("type", request.payload.vehicle_type)
+						.first();
+					if (existingVehicleType) {
+						return {ok: false, msge: `Vehicle type of '${request.payload.vehicle_type}' already exists`};
+					}
+					let newVehicleType = await VehicleType.query().insert({
+						type: request.payload.vehicle_type
+					});
+					request.payload.vehicle_type_id = newVehicleType.id;
+				}
+				delete request.payload.vehicle_type;
+				const existingVehicle = await Vehicle.query()
+					.where("license_plate", request.payload.license_plate)
+					.where("license_state", request.payload.license_state)
+					.first();
+				if (existingVehicle) {
+					return {ok: false, msge: `A vehicle with ${request.payload.license_state} license plate ${request.payload.license_plate} is already registered`};
+				}
+				const newVehicle = await Vehicle.query().insert(request.payload);
+				if (newVehicle) {
+					return {ok: true, data: newVehicle, msge: `Added vehicle '${request.payload.make} ${request.payload.model} ${request.payload.year} (${request.payload.license_plate})'`};
+				} else {
+					return {ok: false, msge: `Couldn't add vehicle '${request.payload.make} ${request.payload.model} ${request.payload.year} (${request.payload.license_plate})'`};
+				}
+			}
+		},
+
 		// update a specific vehicle
 		{
 			method: 'PATCH',
@@ -268,6 +319,7 @@ const init = async () => {
 						model: Joi.string().required(),
 						color: Joi.string().required(),
 						vehicle_type_id: Joi.number().integer().required(),
+						vehicle_type: Joi.string(),
 						capacity: Joi.number().integer().required(),
 						mpg: Joi.number().required(),
 						license_state: Joi.string().regex(/\w{2}/).required(),
@@ -277,48 +329,22 @@ const init = async () => {
 				}
 			},
 			handler: async (request) => {
+				if (request.payload.vehicle_type_id === -1) {
+					const existingVehicleType = await VehicleType.query()
+						.where("type", request.payload.vehicle_type)
+						.first();
+					if (existingVehicleType) {
+						return {ok: false, msge: `Vehicle type of '${request.payload.vehicle_type}' already exists`};
+					}
+					let newVehicleType = await VehicleType.query().insert({ type: request.payload.vehicle_type });
+					request.payload.vehicle_type_id = newVehicleType.id;
+				}
+				delete request.payload.vehicle_type;
 				let updatedVehicle = await Vehicle.query()
 					.where('id', request.params['vehicle_id'])
 					.update(request.payload);
 				if (updatedVehicle) {return {ok: true, msge: "Vehicle has been updated"};}
-				else {return {ok: false, msge: "Failed to update vehicle"};}
-			}
-		},
-
-		// create a new vehicle
-		{
-			method: 'POST',
-			path: '/vehicles',
-			config: {
-				description: 'Create a new vehicle',
-				validate: {
-					payload: Joi.object({
-						make: Joi.string().required(),
-						model: Joi.string().required(),
-						vehicle_type_id: Joi.number().integer().required(),
-						year: Joi.number().integer().required(),
-						color: Joi.string().required(),
-						license_state: Joi.string().regex(/\w{2}/).required(),
-						license_plate: Joi.string().required(),
-						capacity: Joi.number().integer().required(),
-						mpg: Joi.number().required(),
-					}).options({ allowUnknown: true})
-				}
-			},
-			handler: async (request) => {
-				const existingVehicle = await Vehicle.query()
-					.where("license_plate", request.payload.license_plate)
-					.where("license_state", request.payload.license_state)
-					.first();
-				if (existingVehicle) {
-					return {ok: false, msge: `A vehicle with ${request.payload.license_state} license plate ${request.payload.license_plate} is already registered`};
-				}
-				const newVehicle = await Vehicle.query().insert(request.payload);
-				if (newVehicle) {
-					return {ok: true, msge: `Added vehicle '${request.payload.make} ${request.payload.model} ${request.payload.year} (${request.payload.license_plate})'`};
-				} else {
-					return {ok: false, msge: `Couldn't add vehicle '${request.payload.make} ${request.payload.model} ${request.payload.year} (${request.payload.license_plate})'`};
-				}
+				else {return {ok: false, data: updatedVehicle, msge: "Failed to update vehicle"};}
 			}
 		},
 
@@ -331,34 +357,6 @@ const init = async () => {
 				let query = VehicleType.query();
 				query = getAndApplyRelations(request, query);
 				return query;
-			}
-		},
-
-		// create a new vehicle type
-		{
-			method: 'POST',
-			path: '/vehicle_types',
-			config: {
-				description: 'Create a new vehicle type',
-				validate: {
-					payload: Joi.object({
-						type: Joi.string().required(),
-					})
-				}
-			},
-			handler: async (request) => {
-				const existingVehicleType = await VehicleType.query()
-					.where("type", request.payload.type)
-					.first();
-				if (existingVehicleType) {
-					return {ok: false, msge: `Vehicle type of '${request.payload.type}' already exists`};
-				}
-				const newVehicleType = await VehicleType.query().insert(request.payload);
-				if (newVehicleType) {
-					return {ok: true, msge: `New vehicle type '${request.payload.type}' created`};
-				} else {
-					return {ok: false, msge: `Couldn't create vehicle type '${request.payload.type}'`};
-				}
 			}
 		},
 
@@ -389,6 +387,148 @@ const init = async () => {
 					.first();
 				query = getAndApplyRelations(request, query);
 				return query;
+			}
+		},
+
+		// create a new ride
+		{
+			method: 'POST',
+			path: '/rides',
+			config: {
+				description: 'Create a new ride',
+				validate: {
+					payload: Joi.object({
+						date: Joi.string().required(),
+						time: Joi.string().required(),
+						distance: Joi.number().required(),
+						vehicle_id: Joi.number().integer().min(0).required(),
+						from_location_id: Joi.number().required(),
+						to_location_id: Joi.number().required()
+					}).options({ allowUnknown: true})
+				}
+			},
+			handler: async (request) => {
+				// insert new ride locations if needed
+				let from_location_id = request.payload.from_location_id;
+				let to_location_id = request.payload.to_location_id;
+				let newLocationsToBeInserted = [];
+				if (from_location_id === -1) {
+					newLocationsToBeInserted.push(request.payload.from_location);
+					newLocationsToBeInserted.push("from");
+				}
+				if (to_location_id === -1) {
+					newLocationsToBeInserted.push(request.payload.to_location);
+					newLocationsToBeInserted.push("to");
+				}
+				for (let i=0; i<newLocationsToBeInserted.length; i+=2) {
+					const location = newLocationsToBeInserted[i];
+					const type = newLocationsToBeInserted[i+1];
+					const existingLocation = await Location.query()
+						.where("address", location.address)
+						.where("city", location.city)
+						.where("state", location.state)
+						.where("zip_code", location.zip_code)
+						.first();
+					if (existingLocation) {return {ok: false, msge: `The given '${type}' location is already registered under the name ${existingLocation.name}`};}
+					else {
+						let newLocation = await Location.query().insert({
+							name: location.name,
+							address: location.address,
+							city: location.city,
+							state: location.state,
+							zip_code: location.zip_code,
+						});
+						if (type === "from") { from_location_id = newLocation.id; }
+						else { to_location_id = newLocation.id; }
+					}
+				}
+				const newRide = await Ride.query().insert({
+					date: request.payload.date,
+					time: request.payload.time,
+					distance: request.payload.distance,
+					fuel_price: null,
+					fee: null,
+					vehicle_id: request.payload.vehicle_id,
+					from_location_id: from_location_id,
+					to_location_id: to_location_id
+				});
+				if (newRide) {
+					return {ok: true, data: newRide, msge: `Added ride from '${request.payload.from_location.name}' to '${request.payload.to_location.name}' scheduled for ${request.payload.date} at ${request.payload.time}`};
+				} else {return {ok: false, msge: `Couldn't add ride. Please try again`};}
+			}
+		},
+
+		// update a ride
+		{
+			method: 'PATCH',
+			path: '/rides/{ride_id}',
+			config: {
+				description: 'Update a specified ride',
+				validate: {
+					params: Joi.object({
+						ride_id: Joi.number().integer().min(0).required()
+					}),
+					payload: Joi.object({
+						date: Joi.string().required(),
+						time: Joi.string().required(),
+						distance: Joi.number().required(),
+						vehicle_id: Joi.number().integer().min(0).required(),
+						from_location_id: Joi.number().required(),
+						to_location_id: Joi.number().required()
+					}).options({ allowUnknown: true})
+				}
+			},
+			handler: async (request) => {
+				// insert new ride locations if needed
+				let from_location_id = request.payload.from_location_id;
+				let to_location_id = request.payload.to_location_id;
+				let newLocationsToBeInserted = [];
+				if (from_location_id === -1) {
+					newLocationsToBeInserted.push(request.payload.from_location);
+					newLocationsToBeInserted.push("from");
+				}
+				if (to_location_id === -1) {
+					newLocationsToBeInserted.push(request.payload.to_location);
+					newLocationsToBeInserted.push("to");
+				}
+				for (let i=0; i<newLocationsToBeInserted.length; i+=2) {
+					const location = newLocationsToBeInserted[i];
+					const type = newLocationsToBeInserted[i+1];
+					const existingLocation = await Location.query()
+						.where("address", location.address)
+						.where("city", location.city)
+						.where("state", location.state)
+						.where("zip_code", location.zip_code)
+						.first();
+					if (existingLocation) {return {ok: false, msge: `The given '${type}' location is already registered under the name ${existingLocation.name}`};}
+					else {
+						let newLocation = await Location.query()
+							.insert({
+								name: location.name,
+								address: location.address,
+								city: location.city,
+								state: location.state,
+								zip_code: location.zip_code,
+							});
+						if (type === "from") { from_location_id = newLocation.id; }
+						else { to_location_id = newLocation.id; }
+					}
+				}
+				const updatedRide = await Ride.query()
+					.where("id", request.params.ride_id)
+					.update({
+						date: request.payload.date,
+						time: request.payload.time,
+						distance: request.payload.distance,
+						fuel_price: null,
+						fee: null,
+						vehicle_id: request.payload.vehicle_id,
+						from_location_id: from_location_id,
+						to_location_id: to_location_id
+					});
+				if (updatedRide) {
+					return {ok: true, data: updatedRide, msge: `Ride has been updated`};
+				} else {return {ok: false, msge: `Couldn't update ride. Please try again`};}
 			}
 		},
 

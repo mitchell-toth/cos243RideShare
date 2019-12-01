@@ -10,7 +10,7 @@
 
 <script>
 export default {
-    props: ["selectedVehicleType"],
+    props: ["selectedVehicleType", "addNewVehicleType"],
     data: function() {
         return {
             vehicleTypes: [],
@@ -36,6 +36,9 @@ export default {
                 text: vehicleType.type,
                 value: vehicleType.id
             }));
+            if (this.addNewVehicleType === "true") {
+                this.vehicleTypes.push({text: "Add a New Vehicle Type", value: -1});
+            }
         });
     },
     methods: {

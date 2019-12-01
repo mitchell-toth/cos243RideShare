@@ -50,8 +50,16 @@
                             <p>Vehicle Type:</p>
                             <vehicle-type-dropdown
                                     v-bind:selected-vehicle-type="selectedVehicle.vehicle_type_id"
+                                    add-new-vehicle-type="true"
                                     v-on:selectedVehicleType="selectVehicleType"
                             ></vehicle-type-dropdown>
+                            <div v-if="vehicle_type_id === -1" style="width:90%; margin-left:40px; background-color: aliceblue; padding: 10px; border-radius: 10px">
+                                <v-text-field
+                                        label="Vehicle Type"
+                                        v-model="selectedVehicle.vehicle_type"
+                                        v-bind:rules="rules.required_string"
+                                ></v-text-field>
+                            </div>
                             <v-text-field
                                     label="Year"
                                     v-model="selectedVehicle.year"
@@ -174,6 +182,7 @@ export default {
             vehicles: [],
             search: "",
             selectedVehicle: {},
+            vehicle_type_id: "",
             newVehicle: {make: "", model: "", vehicle_type: "", vehicle_type_id: "", year: "", color: "", license_state: "", state: "", license_plate: "", capacity: "", mpg: "",},
             selectedDriver: {
                 driver_id: ""
@@ -238,11 +247,13 @@ export default {
         createVehicle() {
             this.creatingAVehicle = true; this.editingAVehicle = false; this.authorizingAVehicle = false;
             this.selectedVehicle = this.newVehicle;
+            this.vehicle_type_id = this.selectedVehicle.vehicle_type_id;
             this.showDialog("Add a Vehicle", "", "createEdit");
         },
         editVehicle(item) {
             this.creatingAVehicle = false; this.editingAVehicle = true; this.authorizingAVehicle = false;
             this.selectedVehicle = item;
+            this.vehicle_type_id = this.selectedVehicle.vehicle_type_id;
             this.showDialog("Edit Vehicle", "", "createEdit");
         },
         authorizeVehicle(item) {
@@ -279,6 +290,7 @@ export default {
                 model: this.selectedVehicle.model,
                 color: this.selectedVehicle.color,
                 vehicle_type_id: this.selectedVehicle.vehicle_type_id,
+                vehicle_type: this.selectedVehicle.vehicle_type,
                 capacity: parseInt(this.selectedVehicle.capacity),
                 mpg: parseFloat(this.selectedVehicle.mpg),
                 license_state: this.selectedVehicle.license_state,
@@ -288,15 +300,14 @@ export default {
             // edit the selected vehicle
             if (this.editingAVehicle) {
                 let url = `vehicles/${parseInt(this.selectedVehicle.id)}`;
-                this.$axios.patch(url, vehicle)
-                    .then((response) => {
-                        if (response.status === 200) {
-                            if (response.data.ok) {
-                                this.showDialog("Success", response.data.msge, "successFail");
-                                this.hideDialog("createEdit");
-                            }
-                            else {this.showDialog("Sorry", response.data.msge, "successFail");}
+                this.$axios.patch(url, vehicle).then((response) => {
+                    if (response.status === 200) {
+                        if (response.data.ok) {
+                            this.showDialog("Success", response.data.msge, "successFail");
+                            this.hideDialog("createEdit");
                         }
+                        else {this.showDialog("Sorry", response.data.msge, "successFail");}
+                    }
                 }).catch(err => this.showDialog("Failed", `${err}. Please ensure that all fields have valid input`, "successFail"));
             }
             // create a new vehicle
@@ -369,7 +380,14 @@ export default {
         },
         selectVehicleType(vehicle_type_option) {
             this.selectedVehicle.vehicle_type_id = vehicle_type_option.key;
-            this.selectedVehicle.vehicle_type = vehicle_type_option.value;
+            this.vehicle_type_id = vehicle_type_option.key;
+            if (this.vehicle_type_id === -1) {
+                this.selectedVehicle.vehicle_type = "";
+            }
+            else {
+                this.selectedVehicle.vehicle_type = vehicle_type_option.value;
+            }
+
         },
         selectState(state_option) {
             this.selectedVehicle.license_state = state_option.key;

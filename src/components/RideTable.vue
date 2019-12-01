@@ -54,7 +54,7 @@
                                     v-bind:landscape="true"
                                 ></v-time-picker>
                             </div>
-                            <p style="margin-top: 20px">Distance (miles)</p>
+                            <p style="margin-top: 20px">Distance (miles):</p>
                             <v-text-field
                                     label="Distance"
                                     v-model="selectedRide.distance"
@@ -64,7 +64,7 @@
                             <p>Vehicle:</p>
                             <vehicle-dropdown
                                     v-bind:selected-vehicle="selectedRide.vehicle_id"
-                                    v-on:selectedRide="selectVehicle"
+                                    v-on:selectedVehicle="selectVehicle"
                             ></vehicle-dropdown>
                             <p>From:</p>
                             <location-dropdown
@@ -72,7 +72,7 @@
                                     add-new-location="true"
                                     v-on:selectedLocation="selectFromLocation"
                             ></location-dropdown>
-                            <div v-if="selectedRide.from_location_id === -1" style="width:90%; margin-left:40px; background-color: aliceblue; padding: 10px; border-radius: 10px">
+                            <div v-if="from_location_id === -1" style="width:90%; margin-left:40px; background-color: aliceblue; padding: 10px; border-radius: 10px">
                                 <v-text-field
                                         label="Name"
                                         v-model="selectedRide.from_location.name"
@@ -106,7 +106,7 @@
                                     add-new-location="true"
                                     v-on:selectedLocation="selectToLocation"
                             ></location-dropdown>
-                            <div v-if="selectedRide.to_location_id === -1" style="width:90%; margin-left:40px; background-color: aliceblue; padding: 10px; border-radius: 10px">
+                            <div v-if="to_location_id === -1" style="width:90%; margin-left:40px; background-color: aliceblue; padding: 10px; border-radius: 10px">
                                 <v-text-field
                                         label="Name"
                                         v-model="selectedRide.to_location.name"
@@ -233,6 +233,9 @@ export default {
                 }
             },
             selectedRide: {},
+            originalRide: {},
+            from_location_id: "",
+            to_location_id: "",
             drivers: [],
             passengers: [],
             headers_driversPassengers: [
@@ -335,9 +338,30 @@ export default {
             else {console.warn("Unrecognized dialog type parameter passed");}
         },
         saveChangesOfRide() {
-            console.log(this.selectedRide);
+            if (this.creatingARide) {
+                this.$axios.post("rides", this.selectedRide).then((response) => {
+                    if (response.status === 200) {
+                        if (response.data.ok) {
+                            this.showDialog("Success", response.data.msge, "successFail");
+                            this.hideDialog("createEdit");
+                        }
+                        else {this.showDialog("Sorry", response.data.msge, "successFail");}
+                    }
+                }).catch(err => this.showDialog("Failed", `${err}. Please ensure that all fields have valid input`, "successFail"));
+            }
+            else if (this.editingARide) {
+                this.$axios.patch(`rides/${this.selectedRide.id}`, this.selectedRide).then((response) => {
+                    if (response.status === 200) {
+                        if (response.data.ok) {
+                            this.showDialog("Success", response.data.msge, "successFail");
+                            this.hideDialog("createEdit");
+                        } else {this.showDialog("Sorry", response.data.msge, "successFail");}
+                    }
+                }).catch(err => this.showDialog("Failed", `${err}. Please ensure that all fields have valid input`, "successFail"));
+            }
         },
         cancelChangesOfRide(type) {
+            this.selectedRide = {};
             this.hideDialog(type);
         },
         getDate(str) {
@@ -354,11 +378,14 @@ export default {
             this.selectedRide = this.newRide;
             this.selectedRide.date = new Date().toISOString().substr(0,10);
             this.selectedRide.time = "12:00";
+            this.from_location_id = this.selectedRide.from_location_id; this.to_location_id = this.selectedRide.to_location_id;
             this.showDialog("Add a Ride", "", "createEdit");
         },
         editRide(item) {
             this.editingARide = true; this.creatingARide = false;
+            this.originalRide = JSON.parse(JSON.stringify(item));
             this.selectedRide = item;
+            this.from_location_id = this.selectedRide.from_location_id; this.to_location_id = this.selectedRide.to_location_id;
             this.showDialog("Edit Ride", "", "createEdit");
         },
         showRideDetails(item) {
@@ -396,6 +423,7 @@ export default {
         },
         selectFromLocation(location_option) {
             this.selectedRide.from_location_id = location_option.value;
+            this.from_location_id = location_option.value;
             this.selectedRide.from_location.name = location_option.name;
             this.selectedRide.from_location.address = location_option.address;
             this.selectedRide.from_location.city = location_option.city;
@@ -405,6 +433,7 @@ export default {
         },
         selectToLocation(location_option) {
             this.selectedRide.to_location_id = location_option.value;
+            this.to_location_id = location_option.value;
             this.selectedRide.to_location.name = location_option.name;
             this.selectedRide.to_location.address = location_option.address;
             this.selectedRide.to_location.city = location_option.city;

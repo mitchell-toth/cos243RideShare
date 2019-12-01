@@ -4,24 +4,10 @@
       <h4 class="display-1">Admin Stuff</h4>
 
       <br>
-      <vehicle-table></vehicle-table>
+      <ride-table type-of-rides="Upcoming"></ride-table>
       <br>
 
-      <p>Add a new vehicle type:</p>
-      <v-form v-model="valid_vehicleType">
-        <v-text-field
-          v-model="newVehicleType"
-          v-bind:rules="rules.required"
-          ref="vehicleTypeTextField"
-          label="Vehicle Type"
-        >
-        </v-text-field>
-        <v-btn v-bind:disabled="!valid_vehicleType" v-on:click="addNewVehicleType">Submit</v-btn>
-      </v-form>
-
-      <br>
-
-      <ride-table type-of-rides="Upcoming"></ride-table><br>
+      <vehicle-table></vehicle-table><br>
 
       <div class="text-xs-center">
         <v-dialog v-model="dialogVisible" width="500">
@@ -58,11 +44,8 @@
 import RideTable from "../components/RideTable";
 import VehicleTable from "../components/VehicleTable";
 export default {
-  name: "Accounts",
-  components: {
-    RideTable,
-    VehicleTable
-  },
+  name: "Admin",
+  components: {RideTable, VehicleTable},
   data: function() {
     return {
       headers: [
@@ -71,13 +54,6 @@ export default {
         { text: "Last", value: "lastName" },
         { text: "Action", value: "action" }
       ],
-      accounts: [],
-      newVehicleType: "",
-
-      valid_vehicleType: false,
-      rules: {
-        required: [val => val.length > 0 || "Required"],
-      },
 
       // Data to be displayed by the dialog.
       dialogHeader: "<no dialogHeader>",
@@ -96,31 +72,6 @@ export default {
     showSnackbar(text) {
       this.snackbar.text = text;
       this.snackbar.show = true;
-    },
-
-    // Update account information.
-    updateAccount(item) {
-      console.log("UPDATE", JSON.stringify(item, null, 2));
-      this.showSnackbar("Sorry, update is not yet implemented.");
-    },
-
-    addNewVehicleType() {
-      this.$axios
-        .post("/vehicle_types", {
-          type: this.newVehicleType
-        })
-        .then(result => {
-          // Based on whether things worked or not, show the
-          // appropriate dialog.
-          if (result.status === 200) {
-            if (result.data.ok) {
-              this.showDialog("Success", result.data.msge);
-            } else {
-              this.showDialog("Sorry", result.data.msge);
-            }
-          }
-        })
-        .catch(err => this.showDialog("Failed", `${err}. Please ensure that the vehicle type entered is valid text`));
     },
 
     // Helper method to display the dialog box with the appropriate content.
