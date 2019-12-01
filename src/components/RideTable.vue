@@ -11,7 +11,7 @@
                         hide-details
                 ></v-text-field>
             </v-card-title>
-            <v-btn color="primary" style="margin-left:8px" v-on:click="createRide" >Add a Ride</v-btn>
+            <v-btn color="primary" style="margin-left:8px; margin-bottom: 10px" v-on:click="createRide" >Add a Ride</v-btn>
             <v-data-table
                     class="elevation-1"
                     v-bind:headers="headers_rides"
@@ -39,16 +39,22 @@
 
                     <v-form v-model="valid">
                         <v-card-text>
-                            <v-text-field
-                                    label="Date"
+                            <p>Departure Date and Time:</p>
+                            <div style="display: inline-block; margin-right: 20px">
+                                <v-date-picker
                                     v-model="selectedRide.date"
-                                    v-bind:rules="rules.required_string"
-                            ></v-text-field>
-                            <v-text-field
-                                    label="Time"
+                                    v-bind:landscape="true"
+                                    v-bind:show-current="true"
+                                    v-bind:allowed-dates="allowedDates"
+                                ></v-date-picker>
+                            </div>
+                            <div style="display: inline-block">
+                                <v-time-picker
                                     v-model="selectedRide.time"
-                                    v-bind:rules="rules.required_string"
-                            ></v-text-field>
+                                    v-bind:landscape="true"
+                                ></v-time-picker>
+                            </div>
+                            <p style="margin-top: 20px">Distance (miles)</p>
                             <v-text-field
                                     label="Distance"
                                     v-model="selectedRide.distance"
@@ -63,13 +69,71 @@
                             <p>From:</p>
                             <location-dropdown
                                     v-bind:selected-location="selectedRide.from_location_id"
+                                    add-new-location="true"
                                     v-on:selectedLocation="selectFromLocation"
                             ></location-dropdown>
+                            <div v-if="selectedRide.from_location_id === -1" style="width:90%; margin-left:40px; background-color: aliceblue; padding: 10px; border-radius: 10px">
+                                <v-text-field
+                                        label="Name"
+                                        v-model="selectedRide.from_location.name"
+                                        v-bind:rules="rules.required_string"
+                                ></v-text-field>
+                                <v-text-field
+                                        label="Address"
+                                        v-model="selectedRide.from_location.address"
+                                        v-bind:rules="rules.required_string"
+                                ></v-text-field>
+                                <v-text-field
+                                        label="City"
+                                        v-model="selectedRide.from_location.city"
+                                        v-bind:rules="rules.required_string"
+                                ></v-text-field>
+                                <p>State:</p>
+                                <state-dropdown
+                                        v-bind:selected-state="selectedRide.from_location.state"
+                                        v-on:selectedState="selectFromState"
+                                ></state-dropdown>
+                                <v-text-field
+                                        label="Zip Code"
+                                        v-model="selectedRide.from_location.zip_code"
+                                        v-bind:rules="rules.required_zipCode"
+                                        type="number"
+                                ></v-text-field>
+                            </div>
                             <p>To:</p>
                             <location-dropdown
                                     v-bind:selected-location="selectedRide.to_location_id"
+                                    add-new-location="true"
                                     v-on:selectedLocation="selectToLocation"
                             ></location-dropdown>
+                            <div v-if="selectedRide.to_location_id === -1" style="width:90%; margin-left:40px; background-color: aliceblue; padding: 10px; border-radius: 10px">
+                                <v-text-field
+                                        label="Name"
+                                        v-model="selectedRide.to_location.name"
+                                        v-bind:rules="rules.required_string"
+                                ></v-text-field>
+                                <v-text-field
+                                        label="Address"
+                                        v-model="selectedRide.to_location.address"
+                                        v-bind:rules="rules.required_string"
+                                ></v-text-field>
+                                <v-text-field
+                                        label="City"
+                                        v-model="selectedRide.to_location.city"
+                                        v-bind:rules="rules.required_string"
+                                ></v-text-field>
+                                <p>State:</p>
+                                <state-dropdown
+                                        v-bind:selected-state="selectedRide.to_location.state"
+                                        v-on:selectedState="selectToState"
+                                ></state-dropdown>
+                                <v-text-field
+                                        label="Zip Code"
+                                        v-model="selectedRide.to_location.zip_code"
+                                        v-bind:rules="rules.required_zipCode"
+                                        type="number"
+                                ></v-text-field>
+                            </div>
                         </v-card-text>
 
                         <v-divider></v-divider>
@@ -141,8 +205,9 @@
 <script>
 import VehicleDropdown from "./VehicleDropdown";
 import LocationDropdown from "./LocationDropdown";
+import StateDropdown from "./StateDropdown";
 export default {
-    components: {VehicleDropdown, LocationDropdown},
+    components: {VehicleDropdown, LocationDropdown, StateDropdown},
     props: ["typeOfRides"],
     data: function() {
         return {
@@ -187,13 +252,10 @@ export default {
                     val => val >= 0 || "Cannot be negative",
                     val => /\d+/.test(val) || "Must be a number",
                 ],
-                required_date: [
+                required_zipCode: [
+                    val => val >= 0 || "Cannot be negative",
                     val => val !== "" && val !== undefined || "Required",
-                    val => new Date(val) > new Date() || "Date cannot be in the past"
-                ],
-                required_time: [
-                    val => val !== "" && val !== undefined || "Required",
-                    val => val >= 0 && val < 24 || "Hour must be between 0 and 24"
+                    val => /^\d{5}$/.test(val) || "Must be 5 numbers",
                 ]
             },
 
@@ -273,15 +335,16 @@ export default {
             else {console.warn("Unrecognized dialog type parameter passed");}
         },
         saveChangesOfRide() {
-            console.log(this.selectedRide)
+            console.log(this.selectedRide);
         },
         cancelChangesOfRide(type) {
             this.hideDialog(type);
         },
         getDate(str) {
             let date = new Date(str);
-            return `${date.getMonth()}-${date.getDate()}-${date.getFullYear()}`;
+            return new Date(date).toISOString().substr(0,10);
         },
+        allowedDates: val => new Date(val) >= new Date()-86400000,
         capitalize(str) {
             if (typeof str !== 'string') return str;
             return str.charAt(0).toUpperCase() + str.slice(1);
@@ -289,6 +352,8 @@ export default {
         createRide() {
             this.editingARide = false; this.creatingARide = true;
             this.selectedRide = this.newRide;
+            this.selectedRide.date = new Date().toISOString().substr(0,10);
+            this.selectedRide.time = "12:00";
             this.showDialog("Add a Ride", "", "createEdit");
         },
         editRide(item) {
@@ -346,6 +411,12 @@ export default {
             this.selectedRide.to_location.state = location_option.state;
             this.selectedRide.to_location.zip_code = location_option.zip_code;
             this.selectedRide.to_location.display = `${location_option.name}, ${location_option.address}\n${location_option.city}, ${location_option.state} ${location_option.zip_code}`;
+        },
+        selectFromState(state_option) {
+            this.selectedRide.from_location.state = state_option.key;
+        },
+        selectToState(state_option) {
+            this.selectedRide.to_location.state = state_option.key;
         },
     }
 };

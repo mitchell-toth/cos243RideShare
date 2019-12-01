@@ -47,6 +47,7 @@
                                     v-model="selectedVehicle.model"
                                     v-bind:rules="rules.required_string"
                             ></v-text-field>
+                            <p>Vehicle Type:</p>
                             <vehicle-type-dropdown
                                     v-bind:selected-vehicle-type="selectedVehicle.vehicle_type_id"
                                     v-on:selectedVehicleType="selectVehicleType"
@@ -62,6 +63,7 @@
                                     v-model="selectedVehicle.color"
                                     v-bind:rules="rules.required_string"
                             ></v-text-field>
+                            <p>State:</p>
                             <state-dropdown
                                     v-bind:selected-state="selectedVehicle.license_state"
                                     v-on:selectedState="selectState"
@@ -269,7 +271,7 @@ export default {
                     }
                 }).catch(err => this.showDialog("Failed", `${err}. Something went wrong`, "successFail"));
             }).catch(err => this.showDialog("Failed", `${err}. Something went wrong`, "successFail"));
-            this.showDialog("Authorize Vehicle", "", "authorize");
+            this.showDialog("Select Drivers to Authorize", "", "authorize");
         },
         saveChangesOfVehicle() {
             const vehicle = {

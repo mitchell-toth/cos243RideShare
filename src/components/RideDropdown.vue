@@ -41,7 +41,7 @@ export default {
     methods: {
         getDate(str) {
             let date = new Date(str);
-            return `${date.getMonth()}-${date.getDate()}-${date.getFullYear()}`;
+            return new Date(date).toISOString().substr(0,10);
         },
         selectRide() {
             this.selectedOption.value = event.target.innerText;

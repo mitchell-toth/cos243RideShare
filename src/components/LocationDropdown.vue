@@ -10,7 +10,7 @@
 
 <script>
 export default {
-    props: ["selectedLocation"],
+    props: ["selectedLocation", "addNewLocation"],
     data: function() {
         return {
             locations: [],
@@ -41,6 +41,9 @@ export default {
                 state: location.state,
                 zip_code: location.zip_code,
             }));
+            if (this.addNewLocation === "true") {
+                this.locations.push({text: "Add a New Location", value: -1, name: "", address: "", city: "", state: "", zip_code: "",});
+            }
         });
     },
     methods: {
