@@ -17,6 +17,9 @@
                 v-bind:headers="headers_vehicles"
                 v-bind:items="vehicles"
                 v-bind:search="search">
+                <template slot="no-data">
+                    <div>There are currently no registered vehicles</div>
+                </template>
                 <template v-slot:item.action="{ item }">
                     <v-icon color="primary" small class="ml-2" title="Edit" @click="editVehicle(item)">
                         mdi-pencil
@@ -122,6 +125,9 @@
                             v-bind:items="drivers"
                             item-key="driver_id"
                             show-select>
+                            <template slot="no-data">
+                                <div>There are currently no registered drivers</div>
+                            </template>
                         </v-data-table>
                     </v-card-text>
 

@@ -54,7 +54,9 @@ const init = async () => {
 	const server = Hapi.server({
 		host: 'localhost',
 		port: 3000,
-		routes: {cors: true}
+		routes: {
+			cors: true
+		}
 	});
 	
 	// output endpoints at startup
@@ -188,7 +190,7 @@ const init = async () => {
 							vehicle_id: request.payload[i].vehicle_id,
 						};
 						let newAuth = await Authorization.query().insert(object).returning(["driver_id", "vehicle_id"]);
-						if (!newAuth) { return {ok: false, msge: `Couldn't authorize driver. Failed with payload object ${request.payload[i]}`}; }
+						if (!newAuth) { return {ok: false, msge: `Couldn't authorize driver. Failed with payload object ${JSON.stringify(request.payload[i])}`}; }
 					}
 					return {ok: true, msge: `Successfully changed authorization for this vehicle`};
 				}
@@ -607,20 +609,87 @@ const init = async () => {
 		// get all passengers assigned to a specific ride
 		{
 			method: 'GET',
-			path: '/passengersRides/{ride_id}',
+			path: '/passengersRides/{passenger_or_ride_id}&{type}',
 			config: {
-				description: 'Retrieve the passengers assigned to a ride',
+				description: 'Retrieve IDs related to a specified ride/passenger',
 				validate: {
 					params: Joi.object({
-						ride_id: Joi.number().integer().required(),
+						passenger_or_ride_id: Joi.number().integer().required(),
+						type: Joi.string().required()
 					})
 				}
 			},
 			handler: (request) => {
+				let column = "";
+				if (request.params.type === "passenger_id") {column = "passenger_id";}
+				else if (request.params.type === "ride_id") {column = "ride_id";}
+				else {column = "ride_id";}
 				let query = Passengers.query()
-					.where('ride_id', request.params['ride_id']);
+					.where(column, request.params['passenger_or_ride_id']);
 				query = getAndApplyRelations(request, query);
 				return query;
+			}
+		},
+
+		// de-assign a passenger from all of his/her rides
+		{
+			method: 'DELETE',
+			path: '/passengersRides/{passenger_id}',
+			config: {
+				description: 'De-assign a passenger from all rides',
+				validate: {
+					params: Joi.object({
+						passenger_id: Joi.number().integer().required(),
+					})
+				}
+			},
+			handler: async (request) => {
+				const ridesAssignedToPassenger = await Passengers.query()
+					.where("passenger_id", request.params.passenger_id)
+					.first();
+				if (!ridesAssignedToPassenger) {
+					return {ok: true, msge: `No rides to de-assign for passenger with ID ${request.params.passenger_id}`};
+				}
+				await Passengers.query()
+					.delete()
+					.where("passenger_id", request.params.passenger_id);
+				return {ok: true, msge: `De-assigned all rides related to passenger with ID ${request.params.passenger_id}`};
+			}
+		},
+
+		// assign a passenger to all specified rides
+		{
+			method: 'POST',
+			path: '/passengersRides',
+			config: {
+				description: 'Assign a passenger to all specified rides',
+			},
+			handler: async (request) => {
+				if (Array.isArray(request.payload)) {
+					for (let i=0; i<request.payload.length; i++) {
+						const object = {
+							passenger_id: request.payload[i].passenger_id,
+							ride_id: request.payload[i].id
+						};
+						let newAssignedRides = await Passengers.query().insert(object).returning(["passenger_id", "ride_id"]);
+						if (!newAssignedRides) { return {ok: false, msge: `Couldn't update selected rides. Failed with payload object ${JSON.stringify(request.payload[i])}`}; }
+					}
+					return {ok: true, msge: `Successfully updated ride preferences`};
+				}
+				else {
+					const existingAssignment = await Passengers.query()
+						.where("passenger_id", request.payload.passenger_id)
+						.where("ride_id", request.payload.ride_id);
+					if (existingAssignment) {
+						return {ok: false, msge: `Passenger ${request.payload.passenger_id} is already assigned to ride ${request.payload.ride_id}`};
+					}
+					const newAssignedRide = await Passengers.query().insert(request.payload).returning(["passenger_id", "ride_id"]);
+					if (newAssignedRide) {
+						return {ok: true, msge: `Assigned passenger ${request.payload.passenger_id} to ride ${request.payload.ride_id}`};
+					} else {
+						return {ok: false, msge: `Couldn't assign passenger to specified ride`};
+					}
+				}
 			}
 		},
 

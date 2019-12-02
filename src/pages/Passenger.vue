@@ -5,7 +5,7 @@
                 <div style="display:inline-block">
                     <h4 class="display-1">Passenger - Ride With Us</h4>
                     <br>
-                    <instructions details="Sign up for upcoming rides"></instructions>
+                    <instructions details="Sign up for some rides"></instructions>
                 </div>
                 <div style="display:inline-block; float:right">
                     <h3>Sign In:</h3>
@@ -18,11 +18,11 @@
                 </div>
             </v-container>
 
-            <br>
+            <br><br>
 
             <v-card>
                 <v-card-title>
-                    Pending Rides
+                    {{ selectedPassenger.first_name }}'s Upcoming Rides
                     <v-spacer></v-spacer>
                     <v-text-field
                             v-model="search"
@@ -31,12 +31,15 @@
                             hide-details
                     ></v-text-field>
                 </v-card-title>
-                <v-btn color="primary" style="margin-left:8px" v-on:click="showDialog('Choose Rides', '', 'signUpForRides')" >Sign Up For Rides</v-btn>
+                <v-btn color="primary" style="margin-left:8px; margin-bottom: 10px" v-on:click="signUpForRides" >Find Some Rides</v-btn>
                 <v-data-table
                         class="elevation-1"
                         v-bind:headers="headers_rides"
-                        v-bind:items="rides"
+                        v-bind:items="signedUpRides"
                         v-bind:search="search">
+                    <template slot="no-data">
+                        <div>You aren't signed up for any rides!</div>
+                    </template>
                     <template v-slot:item.details="{ item }">
                         <v-icon color="primary" small class="ml-2" title="More Details" @click="showRideDetails(item)">
                             mdi-account-card-details-outline
@@ -60,15 +63,20 @@
                                     label="Search Available Rides"
                                     single-line
                                     hide-details
+                                    style="margin-left:60px"
                             ></v-text-field>
                             <br>
                             <v-data-table
                                     class="elevation-1"
+                                    v-model="signedUpRides"
                                     v-bind:headers="headers_rides"
                                     v-bind:items="rides"
                                     v-bind:search="search"
-                                    item-key="selectedRideID"
+                                    item-key="id"
                                     show-select>
+                                <template slot="no-data">
+                                    <div>There are currently no upcoming rides</div>
+                                </template>
                                 <template v-slot:item.details="{ item }">
                                     <v-icon color="primary" small class="ml-2" title="More Details" @click="showRideDetails(item)">
                                         mdi-account-card-details-outline
@@ -81,8 +89,8 @@
 
                         <v-card-actions>
                             <v-spacer></v-spacer>
-                            <v-btn color="primary" text v-on:click="hideDialog('signUpForRides')">Cancel</v-btn>
-                            <v-btn color="primary" text v-on:click="signUpForRides">Save</v-btn>
+                            <v-btn color="primary" text v-on:click="cancelChangesOfSignedUpRides">Cancel</v-btn>
+                            <v-btn color="primary" text v-on:click="saveChangesOfSignedUpRides">Save</v-btn>
                         </v-card-actions>
                     </v-card>
                 </v-dialog>
@@ -106,6 +114,9 @@
                                     class="elevation-1"
                                     v-bind:headers="headers_driversPassengers"
                                     v-bind:items="drivers">
+                                <template slot="no-data">
+                                    <div>This ride currently has no driver</div>
+                                </template>
                             </v-data-table>
                             <br>
                             <h3>Passengers</h3>
@@ -113,6 +124,9 @@
                                     class="elevation-1"
                                     v-bind:headers="headers_driversPassengers"
                                     v-bind:items="passengers">
+                                <template slot="no-data">
+                                    <div>This ride currently has no passengers</div>
+                                </template>
                             </v-data-table>
                         </v-card-text>
                     </v-card>
@@ -152,13 +166,12 @@ export default {
     data: function() {
         return {
             selectedPassenger: {value: "", text: "", first_name: "", last_name: "", phone: "", email: ""},
+            allRegisteredPassengers: {},
             signedUpRides: [],
+            original_signedUpRides: [],
             search: "",
 
             rides: [],
-            selectedRide: {},
-            selectedRideID: "",
-
             headers_rides: [
                 { text: `Departure${String.fromCharCode(160)}Date`, value: "date" },
                 { text: "Time", value: "time" },
@@ -178,10 +191,6 @@ export default {
                 { text: "Phone", value: "phone" },
                 { text: "Email", value: "email" },
             ],
-
-            valid: false,
-            newDriver: { first_name: "", last_name: "", phone: "", email: "",},
-            accountCreated: false,
 
             // Data to be displayed by the dialog.
             dialogHeader_signUpForRides: "<no dialogHeader>",
@@ -215,10 +224,37 @@ export default {
                 to_location: `${ride.toLocation.name}, ${ride.toLocation.address}\n${ride.toLocation.city}, ${ride.toLocation.state} ${ride.toLocation.zip_code}`,
             }));
         });
+        this.$axios.get("passengers").then(response => {
+            this.allRegisteredPassengers = response.data.map(passenger => ({
+                text: `${passenger.first_name} ${passenger.last_name} (${passenger.email})`,
+                value: passenger.id,
+                first_name: passenger.first_name,
+                last_name: passenger.last_name,
+                phone: passenger.phone,
+                email: passenger.email
+            }));
+            this.selectedPassenger = this.allRegisteredPassengers[0];
+            this.getPassengerRides(this.selectedPassenger.value);
+        });
     },
     methods: {
         signUpForRides() {
-            this.showDialog("Header", "", "signUpForRides");
+            this.copyArray(this.signedUpRides, this.original_signedUpRides);
+            this.showDialog("Choose From All Upcoming Rides", "", "signUpForRides");
+        },
+
+        getPassengerRides(passenger_id) {
+            this.signedUpRides = [];
+            this.$axios.get(`passengersRides/${passenger_id}&passenger_id`).then(response => {
+                for (let i=0; i<response.data.length; i++) {
+                    for (let j=0; j<this.rides.length; j++) {
+                        if (response.data[i].ride_id === this.rides[j].id) {
+                            this.signedUpRides.push(this.rides[j]);
+                            break;
+                        }
+                    }
+                }
+            }).catch(err => this.showDialog("Failed", `${err}. Could not fetch your upcoming rides. Please reload the page`, "successFail"));
         },
 
         // when the icon for 'More Details' is clicked, display all passengers and drivers for the given ride
@@ -237,7 +273,7 @@ export default {
                     });
                 }
             }).catch(err => this.showDialog("Failed", `${err}. Something went wrong`, "successFail"));
-            this.$axios.get(`passengersRides/${item.id}?join=passenger`).then(response => {
+            this.$axios.get(`passengersRides/${item.id}&ride_id?join=passenger`).then(response => {
                 for (let i=0; i<response.data.length; i++) {
                     let passenger = response.data[i].passenger;
                     this.passengers.push({
@@ -250,6 +286,33 @@ export default {
                 }
             }).catch(err => this.showDialog("Failed", `${err}. Something went wrong`, "successFail"));
             this.showDialog("Ride Details", "", "details");
+        },
+
+        saveChangesOfSignedUpRides() {
+            this.$axios.delete(`passengersRides/${this.selectedPassenger.value}`).then(response => {
+                if (response.data.ok) {
+                    for (let i=0; i<this.signedUpRides.length; i++) {
+                        this.signedUpRides[i].passenger_id = this.selectedPassenger.value;
+                    }
+                    this.$axios.post("passengersRides", this.signedUpRides).then(response => {
+                        if (response.status === 200) {
+                            if (response.data.ok) {
+                                this.original_signedUpRides = this.signedUpRides;
+                                this.showDialog("Success", response.data.msge, "successFail");
+                                this.hideDialog("signUpForRides");
+                            } else {
+                                this.showDialog("Sorry", response.data.msge, "successFail");
+                            }
+                        }
+                    }).catch(err => this.showDialog("Failed", `${err}. Please ensure that all fields have valid input`, "successFail"));
+                }
+                else { this.showDialog("Failed", `Something went wrong`, "successFail") }
+            }).catch(err => this.showDialog("Failed", `${err}. Something went wrong`, "successFail"));
+        },
+
+        cancelChangesOfSignedUpRides() {
+            this.signedUpRides = this.original_signedUpRides;
+            this.hideDialog("signUpForRides");
         },
 
         // display a dialog box that corresponds to the given 'type'
@@ -296,9 +359,16 @@ export default {
             return str.charAt(0).toUpperCase() + str.slice(1);
         },
 
+        copyArray(source, destination) {
+            for (let i=0; i<source.length; i++) {
+                destination[i] = source[i];
+            }
+        },
+
         // called whenever the passenger sign-in dropdown value changes
         selectPassenger(passenger_option) {
             this.selectedPassenger = passenger_option;
+            this.getPassengerRides(this.selectedPassenger.value);
         }
     }
 };

@@ -17,6 +17,9 @@
                     v-bind:headers="headers_rides"
                     v-bind:items="rides"
                     v-bind:search="search">
+                <template slot="no-data">
+                    <div>There are currently no rides to display</div>
+                </template>
                 <template v-slot:item.details="{ item }">
                     <v-icon color="primary" small class="ml-2" title="More Details" @click="showRideDetails(item)">
                         mdi-account-card-details-outline
@@ -166,6 +169,9 @@
                                 class="elevation-1"
                                 v-bind:headers="headers_driversPassengers"
                                 v-bind:items="drivers">
+                            <template slot="no-data">
+                                <div>This ride currently has no driver</div>
+                            </template>
                         </v-data-table>
                         <br>
                         <h3>Passengers</h3>
@@ -173,6 +179,9 @@
                                 class="elevation-1"
                                 v-bind:headers="headers_driversPassengers"
                                 v-bind:items="passengers">
+                            <template slot="no-data">
+                                <div>This ride currently has no passengers</div>
+                            </template>
                         </v-data-table>
                     </v-card-text>
                 </v-card>
@@ -347,7 +356,7 @@ export default {
                     });
                 }
             }).catch(err => this.showDialog("Failed", `${err}. Something went wrong`, "successFail"));
-            this.$axios.get(`passengersRides/${item.id}?join=passenger`).then(response => {
+            this.$axios.get(`passengersRides/${item.id}&ride_id?join=passenger`).then(response => {
                 for (let i=0; i<response.data.length; i++) {
                     let passenger = response.data[i].passenger;
                     this.passengers.push({
