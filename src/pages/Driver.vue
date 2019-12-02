@@ -33,7 +33,7 @@
 
                         <v-card-actions>
                             <v-spacer></v-spacer>
-                            <v-btn color="primary" text v-on:click="hideDialog">Okay</v-btn>
+                            <v-btn color="primary" text v-on:click="hideDialog('TEMP')">Okay</v-btn>
                         </v-card-actions>
                     </v-card>
                 </v-dialog>
@@ -51,10 +51,7 @@ export default {
     data: function() {
         return {
             selectedDriver: {value: "", text: "", first_name: "", last_name: "", phone: "", email: ""},
-
-            valid: false,
-            newDriver: { first_name: "", last_name: "", phone: "", email: "",},
-            accountCreated: false,
+            allRegisteredDrivers: [],
 
             // Data to be displayed by the dialog.
             dialogHeader: "<no dialogHeader>",
@@ -62,26 +59,44 @@ export default {
             dialogVisible: false,
         };
     },
+
+    // on load
+    mounted: function() {
+        this.$axios.get("drivers").then(response => {
+            this.allRegisteredDrivers = response.data.map(driver => ({
+                text: `${driver.first_name} ${driver.last_name} (${driver.email})`,
+                value: driver.id,
+                first_name: driver.first_name,
+                last_name: driver.last_name,
+                phone: driver.phone,
+                email: driver.email
+            }));
+            this.selectedDriver = this.allRegisteredDrivers[0];
+        });
+    },
+
     methods: {
-        // Helper method to display the dialog box with the appropriate content.
-        showDialog(header, text) {
-            this.dialogHeader = header;
-            this.dialogText = text;
-            this.dialogVisible = true;
+        // display a dialog box that corresponds to the given 'type'
+        showDialog(header, text, type) {
+            if (type === "TEMP") {
+                this.dialogHeader = header;
+                this.dialogText = text;
+                this.dialogVisible = true;
+            }
+            else {console.warn("Unrecognized dialog type parameter passed");}
         },
 
-        // Invoked by the "Okay" button on the dialog; dismiss the dialog and navigate to the driver page.
-        hideDialog() {
-            this.dialogVisible = false;
-            if (this.accountCreated) {
-                this.$router.push({ name: "admin" });
+        // hide a dialog box of type 'type'
+        hideDialog(type) {
+            if (type === "TEMP") {
+                this.dialogVisible = false;
             }
+            else {console.warn("Unrecognized dialog type parameter passed");}
         },
 
         // called whenever the driver sign-in dropdown value changes
         selectDriver(driver_option) {
             this.selectedDriver = driver_option;
-            console.log(this.selectedDriver);
         },
     }
 };

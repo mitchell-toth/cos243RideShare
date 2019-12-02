@@ -237,6 +237,7 @@ export default {
             this.getPassengerRides(this.selectedPassenger.value);
         });
     },
+
     methods: {
         signUpForRides() {
             this.copyArray(this.signedUpRides, this.original_signedUpRides);
