@@ -30,6 +30,7 @@
                         error-count="10"
                         type="email"
                 ></v-text-field>
+                <br>
                 <v-btn v-bind:disabled="!valid" v-on:click="createNewPassenger">Sign Up</v-btn>
             </v-form>
 
@@ -95,17 +96,17 @@ export default {
         },
 
         // Helper method to display the dialog box with the appropriate content.
-        showDialog: function(header, text) {
+        showDialog(header, text) {
             this.dialogHeader = header;
             this.dialogText = text;
             this.dialogVisible = true;
         },
 
         // Invoked by the "Okay" button on the dialog; dismiss the dialog and navigate to the passenger page.
-        hideDialog: function() {
+        hideDialog() {
             this.dialogVisible = false;
             if (this.accountCreated) {
-                this.$router.push({ name: "admin" });
+                this.$router.push({ name: "passenger" });
             }
         }
     }

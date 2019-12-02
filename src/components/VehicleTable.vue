@@ -261,7 +261,7 @@ export default {
         // when the icon for 'Edit' is clicked
         editVehicle(item) {
             this.creatingAVehicle = false; this.editingAVehicle = true; this.authorizingAVehicle = false;
-            this.selectedVehicle = item;
+            this.selectedVehicle = JSON.parse(JSON.stringify(item));
             this.vehicle_type_id = this.selectedVehicle.vehicle_type_id;
             this.showDialog("Edit Vehicle", "", "createEdit");
         },
@@ -316,6 +316,13 @@ export default {
                 this.$axios.patch(url, vehicle).then((response) => {
                     if (response.status === 200) {
                         if (response.data.ok) {
+                            let index = -1;
+                            for (let i=0; i<this.vehicles.length; i++) {
+                                if (this.vehicles[i].id === this.selectedVehicle.id) { index = i; break; }
+                            }
+                            if (index !== -1) {
+                                this.vehicles.splice(index,1,this.selectedVehicle);
+                            }
                             this.showDialog("Success", response.data.msge, "successFail");
                             this.hideDialog("createEdit");
                         }
@@ -329,6 +336,10 @@ export default {
                     .then((response) => {
                         if (response.status === 200) {
                             if (response.data.ok) {
+                                let newVehicle = response.data.data;
+                                newVehicle.state = this.selectedVehicle.state;
+                                newVehicle.vehicle_type = this.selectedVehicle.vehicle_type;
+                                this.vehicles.push(newVehicle);
                                 this.showDialog("Success", response.data.msge, "successFail");
                                 this.hideDialog("createEdit");
                             }

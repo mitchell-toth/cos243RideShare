@@ -213,7 +213,7 @@ export default {
         return {
             headers_rides: [
                 { text: "Ride ID", value: "id" },
-                { text: "Date", value: "date" },
+                { text: `Departure${String.fromCharCode(160)}Date`, value: "date" },
                 { text: "Time", value: "time" },
                 { text: "Vehicle", value: "vehicle" },
                 { text: "From", value: "from_location.display" },
@@ -233,7 +233,6 @@ export default {
                 }
             },
             selectedRide: {},
-            originalRide: {},
             from_location_id: "",
             to_location_id: "",
             drivers: [],
@@ -327,8 +326,7 @@ export default {
         // when the icon for 'Edit' is clicked
         editRide(item) {
             this.editingARide = true; this.creatingARide = false;
-            this.originalRide = JSON.parse(JSON.stringify(item));
-            this.selectedRide = item;
+            this.selectedRide = JSON.parse(JSON.stringify(item));
             this.from_location_id = this.selectedRide.from_location_id; this.to_location_id = this.selectedRide.to_location_id;
             this.showDialog("Edit Ride", "", "createEdit");
         },
@@ -371,6 +369,11 @@ export default {
                 this.$axios.post("rides", this.selectedRide).then((response) => {
                     if (response.status === 200) {
                         if (response.data.ok) {
+                            let newRide = response.data.data;
+                            newRide.vehicle = this.selectedRide.vehicle;
+                            newRide.from_location = this.selectedRide.from_location;
+                            newRide.to_location = this.selectedRide.to_location;
+                            this.rides.push(newRide);
                             this.showDialog("Success", response.data.msge, "successFail");
                             this.hideDialog("createEdit");
                         }
@@ -383,6 +386,13 @@ export default {
                 this.$axios.patch(`rides/${this.selectedRide.id}`, this.selectedRide).then((response) => {
                     if (response.status === 200) {
                         if (response.data.ok) {
+                            let index = -1;
+                            for (let i=0; i<this.rides.length; i++) {
+                                if (this.rides[i].id === this.selectedRide.id) { index = i; break; }
+                            }
+                            if (index !== -1) {
+                                this.rides.splice(index,1,this.selectedRide);
+                            }
                             this.showDialog("Success", response.data.msge, "successFail");
                             this.hideDialog("createEdit");
                         } else {this.showDialog("Sorry", response.data.msge, "successFail");}
@@ -393,7 +403,6 @@ export default {
 
         // when 'Cancel' is clicked
         cancelChangesOfRide(type) {
-            this.selectedRide = {};
             this.hideDialog(type);
         },
 
