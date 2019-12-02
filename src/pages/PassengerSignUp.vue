@@ -1,9 +1,37 @@
 <template>
     <v-container>
         <div>
-            <h4 class="display-1">Become a Driver</h4>
+            <h4 class="display-1">Become a Passenger</h4>
             <br>
-            <instructions details="Sign up to drive for Ride Share."></instructions>
+            <instructions details="Sign up to ride with us."></instructions>
+
+            <v-form v-model="valid">
+                <v-text-field
+                        label="First name"
+                        v-model="newPassenger.first_name"
+                        v-bind:rules="rules.required"
+                ></v-text-field>
+                <v-text-field
+                        label="Last name"
+                        v-model="newPassenger.last_name"
+                        v-bind:rules="rules.required"
+                ></v-text-field>
+                <v-text-field
+                        label="Phone number"
+                        v-model="newPassenger.phone"
+                        v-bind:rules="rules.phone"
+                        error-count="10"
+                        type="phone"
+                ></v-text-field>
+                <v-text-field
+                        label="Email address"
+                        v-model="newPassenger.email"
+                        v-bind:rules="rules.email"
+                        error-count="10"
+                        type="email"
+                ></v-text-field>
+                <v-btn v-bind:disabled="!valid" v-on:click="createNewPassenger">Sign Up</v-btn>
+            </v-form>
 
             <div class="text-xs-center">
                 <v-dialog v-model="dialogVisible" width="500">
@@ -32,12 +60,12 @@
 <script>
 import Instructions from "../components/Instructions.vue";
 export default {
-    name: "DriverSignUp",
+    name: "PassengerSignUp",
     components: {Instructions},
     data: function() {
         return {
             valid: false,
-            newDriver: { first_name: "", last_name: "", phone: "", email: "",},
+            newPassenger: { first_name: "", last_name: "", phone: "", email: "",},
             accountCreated: false,
 
             // Data to be displayed by the dialog.
@@ -54,9 +82,9 @@ export default {
     },
     methods: {
         // Invoked when the user clicks the 'Sign Up' button.
-        createNewDriver() {
+        createNewPassenger() {
             this.accountCreated = false;
-            this.$axios.post("drivers", this.newDriver).then(result => {
+            this.$axios.post("passengers", this.newPassenger).then(result => {
                 if (result.status === 200) {
                     if (result.data.ok) {
                         this.showDialog("Success", result.data.msge);
@@ -73,7 +101,7 @@ export default {
             this.dialogVisible = true;
         },
 
-        // Invoked by the "Okay" button on the dialog; dismiss the dialog and navigate to the driver page.
+        // Invoked by the "Okay" button on the dialog; dismiss the dialog and navigate to the passenger page.
         hideDialog: function() {
             this.dialogVisible = false;
             if (this.accountCreated) {
@@ -83,3 +111,4 @@ export default {
     }
 };
 </script>
+

@@ -31,7 +31,7 @@
         </v-card>
 
         <div class="text-xs-center">
-            <v-dialog v-model="dialogVisible_createEdit" width="70%">
+            <v-dialog v-model="dialogVisible_createEdit" width="1050">
                 <v-card>
                     <v-card-title primary-title>
                         {{ dialogHeader_createEdit }}
@@ -149,7 +149,7 @@
         </div>
 
         <div class="text-xs-center">
-            <v-dialog v-model="dialogVisible_details" width="70%">
+            <v-dialog v-model="dialogVisible_details" width="1050">
                 <v-card>
                     <v-card-title primary-title>
                         {{ dialogHeader_details }}
@@ -245,6 +245,7 @@ export default {
                 { text: "Phone", value: "phone" },
                 { text: "Email", value: "email" },
             ],
+            // flags that keep track of what the user is doing
             editingARide: false,
             creatingARide: false,
 
@@ -262,22 +263,26 @@ export default {
                 ]
             },
 
-            // Data to be displayed by the dialog.
+            // 'Add a Ride' and 'Edit' dialog box
             dialogHeader_createEdit: "<no dialogHeader>",
             dialogVisible_createEdit: false,
 
+            // 'More Details' dialog box
             dialogVisible_details: false,
             dialogHeader_details: "<no dialogHeader>",
 
+            // General success/error dialog box
             dialogHeader_successFail: "<no dialogHeader>",
             dialogText_successFail: "<no dialogText>",
             dialogVisible_successFail: false,
         }
     },
+    // on load, fill the ride table with all rides (all upcoming rides depending on value of prop 'typeOfRides')
     mounted: function() {
         let url = "rides?join=fromLocation|toLocation|vehicle";
         if (this.typeOfRides === "Upcoming") { url += "&type=upcoming"; }
         this.$axios.get(url).then(response => {
+            // below gives the basic ride object structure
             this.rides = response.data.map(ride => ({
                 id: ride.id,
                 date: this.getDate(ride.date),
@@ -309,70 +314,7 @@ export default {
         });
     },
     methods: {
-        showDialog(header, text, type) {
-            if (type === "createEdit") {
-                this.dialogHeader_createEdit = header;
-                this.dialogVisible_createEdit = true;
-            }
-            else if (type === "details") {
-                this.dialogHeader_details = header;
-                this.dialogVisible_details = true;
-            }
-            else if (type === "successFail") {
-                this.dialogVisible_successFail = true;
-                this.dialogHeader_successFail = header;
-                this.dialogText_successFail = text;
-            }
-            else {console.warn("Unrecognized dialog type parameter passed");}
-        },
-        hideDialog(type) {
-            if (type === "createEdit") {
-                this.dialogVisible_createEdit = false;
-            }
-            else if (type === "details") {
-                this.dialogVisible_details = false;
-            }
-            else if (type === "successFail") {
-                this.dialogVisible_successFail = false;
-            }
-            else {console.warn("Unrecognized dialog type parameter passed");}
-        },
-        saveChangesOfRide() {
-            if (this.creatingARide) {
-                this.$axios.post("rides", this.selectedRide).then((response) => {
-                    if (response.status === 200) {
-                        if (response.data.ok) {
-                            this.showDialog("Success", response.data.msge, "successFail");
-                            this.hideDialog("createEdit");
-                        }
-                        else {this.showDialog("Sorry", response.data.msge, "successFail");}
-                    }
-                }).catch(err => this.showDialog("Failed", `${err}. Please ensure that all fields have valid input`, "successFail"));
-            }
-            else if (this.editingARide) {
-                this.$axios.patch(`rides/${this.selectedRide.id}`, this.selectedRide).then((response) => {
-                    if (response.status === 200) {
-                        if (response.data.ok) {
-                            this.showDialog("Success", response.data.msge, "successFail");
-                            this.hideDialog("createEdit");
-                        } else {this.showDialog("Sorry", response.data.msge, "successFail");}
-                    }
-                }).catch(err => this.showDialog("Failed", `${err}. Please ensure that all fields have valid input`, "successFail"));
-            }
-        },
-        cancelChangesOfRide(type) {
-            this.selectedRide = {};
-            this.hideDialog(type);
-        },
-        getDate(str) {
-            let date = new Date(str);
-            return new Date(date).toISOString().substr(0,10);
-        },
-        allowedDates: val => new Date(val) >= new Date()-86400000,
-        capitalize(str) {
-            if (typeof str !== 'string') return str;
-            return str.charAt(0).toUpperCase() + str.slice(1);
-        },
+        // when 'Add a Ride' is clicked
         createRide() {
             this.editingARide = false; this.creatingARide = true;
             this.selectedRide = this.newRide;
@@ -381,6 +323,8 @@ export default {
             this.from_location_id = this.selectedRide.from_location_id; this.to_location_id = this.selectedRide.to_location_id;
             this.showDialog("Add a Ride", "", "createEdit");
         },
+
+        // when the icon for 'Edit' is clicked
         editRide(item) {
             this.editingARide = true; this.creatingARide = false;
             this.originalRide = JSON.parse(JSON.stringify(item));
@@ -388,6 +332,8 @@ export default {
             this.from_location_id = this.selectedRide.from_location_id; this.to_location_id = this.selectedRide.to_location_id;
             this.showDialog("Edit Ride", "", "createEdit");
         },
+
+        // when the icon for 'More Details' is clicked, display all passengers and drivers for the given ride
         showRideDetails(item) {
             this.drivers = [];
             this.passengers = [];
@@ -417,10 +363,94 @@ export default {
             }).catch(err => this.showDialog("Failed", `${err}. Something went wrong`, "successFail"));
             this.showDialog("Ride Details", "", "details");
         },
+
+        // commit changes of a ride to the database
+        saveChangesOfRide() {
+            // create a new ride
+            if (this.creatingARide) {
+                this.$axios.post("rides", this.selectedRide).then((response) => {
+                    if (response.status === 200) {
+                        if (response.data.ok) {
+                            this.showDialog("Success", response.data.msge, "successFail");
+                            this.hideDialog("createEdit");
+                        }
+                        else {this.showDialog("Sorry", response.data.msge, "successFail");}
+                    }
+                }).catch(err => this.showDialog("Failed", `${err}. Please ensure that all fields have valid input`, "successFail"));
+            }
+            // edit the selected ride
+            else if (this.editingARide) {
+                this.$axios.patch(`rides/${this.selectedRide.id}`, this.selectedRide).then((response) => {
+                    if (response.status === 200) {
+                        if (response.data.ok) {
+                            this.showDialog("Success", response.data.msge, "successFail");
+                            this.hideDialog("createEdit");
+                        } else {this.showDialog("Sorry", response.data.msge, "successFail");}
+                    }
+                }).catch(err => this.showDialog("Failed", `${err}. Please ensure that all fields have valid input`, "successFail"));
+            }
+        },
+
+        // when 'Cancel' is clicked
+        cancelChangesOfRide(type) {
+            this.selectedRide = {};
+            this.hideDialog(type);
+        },
+
+        // display a dialog box that corresponds to the given 'type'
+        showDialog(header, text, type) {
+            if (type === "createEdit") {
+                this.dialogHeader_createEdit = header;
+                this.dialogVisible_createEdit = true;
+            }
+            else if (type === "details") {
+                this.dialogHeader_details = header;
+                this.dialogVisible_details = true;
+            }
+            else if (type === "successFail") {
+                this.dialogVisible_successFail = true;
+                this.dialogHeader_successFail = header;
+                this.dialogText_successFail = text;
+            }
+            else {console.warn("Unrecognized dialog type parameter passed");}
+        },
+
+        // hide a dialog box of type 'type'
+        hideDialog(type) {
+            if (type === "createEdit") {
+                this.dialogVisible_createEdit = false;
+            }
+            else if (type === "details") {
+                this.dialogVisible_details = false;
+            }
+            else if (type === "successFail") {
+                this.dialogVisible_successFail = false;
+            }
+            else {console.warn("Unrecognized dialog type parameter passed");}
+        },
+
+        // format the dates that come in from the database
+        getDate(str) {
+            let date = new Date(str);
+            return new Date(date).toISOString().substr(0,10);
+        },
+
+        // only allow dates after today minus 1 day, meaning >= today
+        allowedDates: val => new Date(val) >= new Date()-86400000,
+
+        // helper function to capitalize a string
+        capitalize(str) {
+            if (typeof str !== 'string') return str;
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        },
+
+        // called whenever the vehicle dropdown value changes
         selectVehicle(vehicle_option) {
             this.selectedRide.vehicle_id = vehicle_option.key;
             this.selectedRide.vehicle = vehicle_option.value;
         },
+
+        // called whenever the from location dropdown value changes
         selectFromLocation(location_option) {
             this.selectedRide.from_location_id = location_option.value;
             this.from_location_id = location_option.value;
@@ -431,6 +461,8 @@ export default {
             this.selectedRide.from_location.zip_code = location_option.zip_code;
             this.selectedRide.from_location.display = `${location_option.name}, ${location_option.address}\n${location_option.city}, ${location_option.state} ${location_option.zip_code}`;
         },
+
+        // called whenever the to location dropdown value changes
         selectToLocation(location_option) {
             this.selectedRide.to_location_id = location_option.value;
             this.to_location_id = location_option.value;
@@ -441,12 +473,16 @@ export default {
             this.selectedRide.to_location.zip_code = location_option.zip_code;
             this.selectedRide.to_location.display = `${location_option.name}, ${location_option.address}\n${location_option.city}, ${location_option.state} ${location_option.zip_code}`;
         },
+
+        // called whenever the from state dropdown value changes
         selectFromState(state_option) {
             this.selectedRide.from_location.state = state_option.key;
         },
+
+        // called whenever the to state dropdown value changes
         selectToState(state_option) {
             this.selectedRide.to_location.state = state_option.key;
-        },
+        }
     }
 };
 </script>

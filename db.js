@@ -54,9 +54,7 @@ const init = async () => {
 	const server = Hapi.server({
 		host: 'localhost',
 		port: 3000,
-		routes: {
-			cors: true
-		}
+		routes: {cors: true}
 	});
 	
 	// output endpoints at startup
@@ -84,7 +82,14 @@ const init = async () => {
 		{
 			method: 'GET',
 			path: '/drivers/{driver_id}',
-			config: {description: 'Retrieve one driver'},
+			config: {
+				description: 'Retrieve one driver',
+				validate: {
+					params: Joi.object({
+						driver_id: Joi.number().integer().required(),
+					})
+				}
+			},
 			handler: (request) => {
 				let query = Driver.query()
 					.where('id', request.params['driver_id'])
@@ -111,14 +116,17 @@ const init = async () => {
 			},
 			handler: async (request) => {
 				const existingDriver = await Driver.query()
+					.where("first_name", request.payload.first_name)
+					.where("last_name", request.payload.last_name)
+					.where("phone", request.payload.phone)
 					.where("email", request.payload.email)
 					.first();
 				if (existingDriver) {
-					return {ok: false, msge: `A driver with email '${request.payload.email}' is already registered`};
+					return {ok: false, msge: `A driver with these credentials is already registered`};
 				}
 				const newDriver = await Driver.query().insert(request.payload);
 				if (newDriver) {
-					return {ok: true, msge: `Registered driver '${request.payload.email}'`};
+					return {ok: true, data: newDriver, msge: `Driver '${request.payload.email}' has been registered`};
 				} else {
 					return {ok: false, msge: `Couldn't register driver with email '${request.payload.email}'`};
 				}
@@ -139,7 +147,7 @@ const init = async () => {
 			},
 			handler: (request) => {
 				let query = Drivers.query()
-					.where('ride_id', request.params['ride_id'])
+					.where('ride_id', request.params['ride_id']);
 				query = getAndApplyRelations(request, query);
 				return query;
 			}
@@ -175,10 +183,11 @@ const init = async () => {
 			handler: async (request) => {
 				if (Array.isArray(request.payload)) {
 					for (let i=0; i<request.payload.length; i++) {
-						let newAuth = await Authorization.query().insert({
+						const object = {
 							driver_id: request.payload[i].driver_id,
 							vehicle_id: request.payload[i].vehicle_id,
-						}).returning(["driver_id", "vehicle_id"]);
+						};
+						let newAuth = await Authorization.query().insert(object).returning(["driver_id", "vehicle_id"]);
 						if (!newAuth) { return {ok: false, msge: `Couldn't authorize driver. Failed with payload object ${request.payload[i]}`}; }
 					}
 					return {ok: true, msge: `Successfully changed authorization for this vehicle`};
@@ -205,7 +214,7 @@ const init = async () => {
 			method: 'DELETE',
 			path: '/authorizations/{vehicle_id}',
 			config: {
-				description: 'Authorize a driver',
+				description: 'De-authorize a driver',
 				validate: {
 					params: Joi.object({
 						vehicle_id: Joi.number().integer().required(),
@@ -282,9 +291,8 @@ const init = async () => {
 					if (existingVehicleType) {
 						return {ok: false, msge: `Vehicle type of '${request.payload.vehicle_type}' already exists`};
 					}
-					let newVehicleType = await VehicleType.query().insert({
-						type: request.payload.vehicle_type
-					});
+					const object = {type: request.payload.vehicle_type};
+					let newVehicleType = await VehicleType.query().insert(object);
 					request.payload.vehicle_type_id = newVehicleType.id;
 				}
 				delete request.payload.vehicle_type;
@@ -336,7 +344,8 @@ const init = async () => {
 					if (existingVehicleType) {
 						return {ok: false, msge: `Vehicle type of '${request.payload.vehicle_type}' already exists`};
 					}
-					let newVehicleType = await VehicleType.query().insert({ type: request.payload.vehicle_type });
+					const object = {type: request.payload.vehicle_type};
+					let newVehicleType = await VehicleType.query().insert(object);
 					request.payload.vehicle_type_id = newVehicleType.id;
 				}
 				delete request.payload.vehicle_type;
@@ -431,18 +440,19 @@ const init = async () => {
 						.first();
 					if (existingLocation) {return {ok: false, msge: `The given '${type}' location is already registered under the name ${existingLocation.name}`};}
 					else {
-						let newLocation = await Location.query().insert({
+						const object = {
 							name: location.name,
 							address: location.address,
 							city: location.city,
 							state: location.state,
 							zip_code: location.zip_code,
-						});
+						};
+						let newLocation = await Location.query().insert(object);
 						if (type === "from") { from_location_id = newLocation.id; }
 						else { to_location_id = newLocation.id; }
 					}
 				}
-				const newRide = await Ride.query().insert({
+				const object = {
 					date: request.payload.date,
 					time: request.payload.time,
 					distance: request.payload.distance,
@@ -451,7 +461,8 @@ const init = async () => {
 					vehicle_id: request.payload.vehicle_id,
 					from_location_id: from_location_id,
 					to_location_id: to_location_id
-				});
+				};
+				const newRide = await Ride.query().insert(object);
 				if (newRide) {
 					return {ok: true, data: newRide, msge: `Added ride from '${request.payload.from_location.name}' to '${request.payload.to_location.name}' scheduled for ${request.payload.date} at ${request.payload.time}`};
 				} else {return {ok: false, msge: `Couldn't add ride. Please try again`};}
@@ -502,30 +513,31 @@ const init = async () => {
 						.first();
 					if (existingLocation) {return {ok: false, msge: `The given '${type}' location is already registered under the name ${existingLocation.name}`};}
 					else {
-						let newLocation = await Location.query()
-							.insert({
-								name: location.name,
-								address: location.address,
-								city: location.city,
-								state: location.state,
-								zip_code: location.zip_code,
-							});
+						const object = {
+							name: location.name,
+							address: location.address,
+							city: location.city,
+							state: location.state,
+							zip_code: location.zip_code,
+						};
+						let newLocation = await Location.query().insert(object);
 						if (type === "from") { from_location_id = newLocation.id; }
 						else { to_location_id = newLocation.id; }
 					}
 				}
+				const object = {
+					date: request.payload.date,
+					time: request.payload.time,
+					distance: request.payload.distance,
+					fuel_price: null,
+					fee: null,
+					vehicle_id: request.payload.vehicle_id,
+					from_location_id: from_location_id,
+					to_location_id: to_location_id
+				};
 				const updatedRide = await Ride.query()
 					.where("id", request.params.ride_id)
-					.update({
-						date: request.payload.date,
-						time: request.payload.time,
-						distance: request.payload.distance,
-						fuel_price: null,
-						fee: null,
-						vehicle_id: request.payload.vehicle_id,
-						from_location_id: from_location_id,
-						to_location_id: to_location_id
-					});
+					.update(object);
 				if (updatedRide) {
 					return {ok: true, data: updatedRide, msge: `Ride has been updated`};
 				} else {return {ok: false, msge: `Couldn't update ride. Please try again`};}
@@ -558,6 +570,40 @@ const init = async () => {
 			}
 		},
 
+		// create a passenger
+		{
+			method: 'POST',
+			path: '/passengers',
+			config: {
+				description: 'Create a new passenger',
+				validate: {
+					payload: Joi.object({
+						first_name: Joi.string().required(),
+						last_name: Joi.string().required(),
+						phone: Joi.string().required(),
+						email: Joi.string().email().required()
+					})
+				}
+			},
+			handler: async (request) => {
+				const existingPassenger = await Passenger.query()
+					.where("first_name", request.payload.first_name)
+					.where("last_name", request.payload.last_name)
+					.where("phone", request.payload.phone)
+					.where("email", request.payload.email)
+					.first();
+				if (existingPassenger) {
+					return {ok: false, msge: `A passenger with these credentials is already registered`};
+				}
+				const newPassenger = await Passenger.query().insert(request.payload);
+				if (newPassenger) {
+					return {ok: true, data: newPassenger, msge: `Passenger '${request.payload.email}' has been registered`};
+				} else {
+					return {ok: false, msge: `Couldn't register passenger with email '${request.payload.email}'`};
+				}
+			}
+		},
+
 		// get all passengers assigned to a specific ride
 		{
 			method: 'GET',
@@ -572,7 +618,7 @@ const init = async () => {
 			},
 			handler: (request) => {
 				let query = Passengers.query()
-					.where('ride_id', request.params['ride_id'])
+					.where('ride_id', request.params['ride_id']);
 				query = getAndApplyRelations(request, query);
 				return query;
 			}

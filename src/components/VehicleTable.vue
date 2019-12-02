@@ -29,7 +29,7 @@
         </v-card>
 
         <div class="text-xs-center">
-            <v-dialog v-model="dialogVisible_createEdit" width="70%">
+            <v-dialog v-model="dialogVisible_createEdit" width="1050">
                 <v-card>
                     <v-card-title primary-title>
                         {{ dialogHeader_createEdit }}
@@ -108,7 +108,7 @@
         </div>
 
         <div class="text-xs-center">
-            <v-dialog v-model="dialogVisible_authorize" width="70%">
+            <v-dialog v-model="dialogVisible_authorize" width="1050">
                 <v-card>
                     <v-card-title primary-title>
                         {{ dialogHeader_authorize }}
@@ -196,6 +196,7 @@ export default {
             ],
             drivers: [],
             authorizedDrivers: [],
+            // flags that keep track of what the user is doing
             editingAVehicle: false,
             creatingAVehicle: false,
             authorizingAVehicle: false,
@@ -209,18 +210,21 @@ export default {
                 ]
             },
 
-            // Data to be displayed by the dialog.
+            // 'Add a Vehicle' and 'Edit' dialog box
             dialogHeader_createEdit: "<no dialogHeader>",
             dialogVisible_createEdit: false,
 
+            // 'Authorize' dialog box
+            dialogHeader_authorize: "<no dialogHeader>",
+            dialogVisible_authorize: false,
+
+            // General success/error dialog box
             dialogHeader_successFail: "<no dialogHeader>",
             dialogText_successFail: "<no dialogText>",
             dialogVisible_successFail: false,
-
-            dialogHeader_authorize: "<no dialogHeader>",
-            dialogVisible_authorize: false,
         }
     },
+    // on load, fill the vehicle table with all vehicles
     mounted: function() {
         this.$axios.get("vehicles?join=vehicleType|state").then(response => {
             this.vehicles = response.data.map(vehicle => ({
@@ -240,22 +244,29 @@ export default {
         }).catch(err => console.error(`Something went wrong loading in the vehicles for the vehicle table. ${err}`));
     },
     methods: {
+        // helper function to capitalize a string
         capitalize(str) {
             if (typeof str !== 'string') return str;
             return str.charAt(0).toUpperCase() + str.slice(1);
         },
+
+        // when 'Add a Vehicle' is clicked
         createVehicle() {
             this.creatingAVehicle = true; this.editingAVehicle = false; this.authorizingAVehicle = false;
             this.selectedVehicle = this.newVehicle;
             this.vehicle_type_id = this.selectedVehicle.vehicle_type_id;
             this.showDialog("Add a Vehicle", "", "createEdit");
         },
+
+        // when the icon for 'Edit' is clicked
         editVehicle(item) {
             this.creatingAVehicle = false; this.editingAVehicle = true; this.authorizingAVehicle = false;
             this.selectedVehicle = item;
             this.vehicle_type_id = this.selectedVehicle.vehicle_type_id;
             this.showDialog("Edit Vehicle", "", "createEdit");
         },
+
+        // when the icon for 'Authorize' is clicked, load and display all drivers, mark the drivers that are currently authorized
         authorizeVehicle(item) {
             this.creatingAVehicle = false; this.editingAVehicle = false; this.authorizingAVehicle = true;
             this.selectedVehicle = item;
@@ -284,6 +295,8 @@ export default {
             }).catch(err => this.showDialog("Failed", `${err}. Something went wrong`, "successFail"));
             this.showDialog("Select Drivers to Authorize", "", "authorize");
         },
+
+        // commit changes of a vehicle to the database
         saveChangesOfVehicle() {
             const vehicle = {
                 make: this.selectedVehicle.make,
@@ -346,9 +359,13 @@ export default {
                 }).catch(err => this.showDialog("Failed", `${err}. Something went wrong`, "successFail"));
             }
         },
+
+        // when 'Cancel' is clicked
         cancelChangesOfVehicle() {
             this.hideDialog('createEdit');
         },
+
+        // display a dialog box that corresponds to the given 'type'
         showDialog(header, text, type) {
             if (type === "createEdit") {
                 this.dialogHeader_createEdit = header;
@@ -365,6 +382,8 @@ export default {
             }
             else {console.warn("Unrecognized dialog type parameter passed");}
         },
+
+        // hide a dialog box of type 'type'
         hideDialog(type) {
             if (type === "createEdit") {
                 this.dialogVisible_createEdit = false;
@@ -378,6 +397,8 @@ export default {
             }
             else {console.warn("Unrecognized dialog type parameter passed");}
         },
+
+        // called whenever the vehicle type dropdown value changes
         selectVehicleType(vehicle_type_option) {
             this.selectedVehicle.vehicle_type_id = vehicle_type_option.key;
             this.vehicle_type_id = vehicle_type_option.key;
@@ -389,13 +410,17 @@ export default {
             }
 
         },
+
+        // called whenever the state dropdown value changes
         selectState(state_option) {
             this.selectedVehicle.license_state = state_option.key;
             this.selectedVehicle.state = state_option.value;
         },
+
+        // called whenever the driver dropdown value changes
         selectDriver(driver_option) {
             this.selectedDriver.driver_id = driver_option.key;
-        },
+        }
     }
 };
 </script>

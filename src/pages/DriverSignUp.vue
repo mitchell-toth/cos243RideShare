@@ -5,6 +5,34 @@
             <br>
             <instructions details="Sign up to drive for Ride Share."></instructions>
 
+            <v-form v-model="valid">
+                <v-text-field
+                        label="First name"
+                        v-model="newDriver.first_name"
+                        v-bind:rules="rules.required"
+                ></v-text-field>
+                <v-text-field
+                        label="Last name"
+                        v-model="newDriver.last_name"
+                        v-bind:rules="rules.required"
+                ></v-text-field>
+                <v-text-field
+                        label="Phone number"
+                        v-model="newDriver.phone"
+                        v-bind:rules="rules.phone"
+                        error-count="10"
+                        type="phone"
+                ></v-text-field>
+                <v-text-field
+                        label="Email address"
+                        v-model="newDriver.email"
+                        v-bind:rules="rules.email"
+                        error-count="10"
+                        type="email"
+                ></v-text-field>
+                <v-btn v-bind:disabled="!valid" v-on:click="createNewDriver">Sign Up</v-btn>
+            </v-form>
+
             <div class="text-xs-center">
                 <v-dialog v-model="dialogVisible" width="500">
                     <v-card>
