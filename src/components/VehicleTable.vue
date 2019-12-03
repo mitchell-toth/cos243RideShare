@@ -27,6 +27,9 @@
                     <v-icon color="primary" small class="ml-2" title="Authorize" @click="authorizeVehicle(item)">
                         mdi-account-edit
                     </v-icon>
+                    <v-icon color="primary" small class="ml-2" title="Delete" @click="deleteVehicle(item)">
+                        mdi-delete
+                    </v-icon>
                 </template>
             </v-data-table>
         </v-card>
@@ -185,14 +188,12 @@ export default {
                 { text: "MPG", value: "mpg" },
                 { text: "Action", value: "action" },
             ],
-            vehicles: [],
+            vehicles: [],  // all vehicles in DB
             search: "",
-            selectedVehicle: {},
-            vehicle_type_id: "",
+            selectedVehicle: {},  // the vehicle associated to the table row of interest
+            vehicle_type_id: "",  // the selectedVehicle's vehicle_type_id
             newVehicle: {make: "", model: "", vehicle_type: "", vehicle_type_id: "", year: "", color: "", license_state: "", state: "", license_plate: "", capacity: "", mpg: "",},
-            selectedDriver: {
-                driver_id: ""
-            },
+
             headers_authorization: [
                 { text: "Driver ID", value: "driver_id" },
                 { text: "First Name", value: "first_name" },
@@ -200,14 +201,15 @@ export default {
                 { text: "Phone", value: "phone" },
                 { text: "Email", value: "email" },
             ],
-            drivers: [],
-            authorizedDrivers: [],
+            drivers: [],  // all drivers in DB
+            authorizedDrivers: [],  // all driver authorized for selectedVehicle
+
             // flags that keep track of what the user is doing
             editingAVehicle: false,
             creatingAVehicle: false,
             authorizingAVehicle: false,
 
-            valid: false,
+            valid: false,  // can 'Save Changes' be clicked?
             rules: {
                 required_string: [val => val !== undefined && val.length > 0 || "Required"],
                 required_number: [
@@ -302,6 +304,25 @@ export default {
             this.showDialog("Select Drivers to Authorize", "", "authorize");
         },
 
+        // delete a vehicle
+        deleteVehicle(item) {
+            if (!confirm(`Are you sure you want to delete vehicle '${item.make} ${item.model} ${item.year} (${this.capitalize(item.color)}) - ${item.license_plate}'? This will also delete all rides associated with this vehicle.`)) {
+                return;
+            }
+            this.$axios.delete(`vehicles/${item.id}`).then(response => {
+                if (response.data.ok) {
+                    let index = -1;
+                    for (let i=0; i<this.vehicles.length; i++) {
+                        if (this.vehicles[i].id === item.id) { index = i; break; }
+                    }
+                    if (index !== -1) { this.vehicles.splice(index, 1); }
+                    this.showDialog("Success", response.data.msge, "successFail");
+                    this.$emit("vehicleDeleted", {});
+                }
+                else { this.showDialog("Failed", `Something went wrong. ${response.data.msge}`, "successFail"); }
+            }).catch(err => this.showDialog("Failed", `${err}. Something went wrong`, "successFail"));
+        },
+
         // commit changes of a vehicle to the database
         saveChangesOfVehicle() {
             const vehicle = {
@@ -332,7 +353,7 @@ export default {
                             this.showDialog("Success", response.data.msge, "successFail");
                             this.hideDialog("createEdit");
                         }
-                        else {this.showDialog("Sorry", response.data.msge, "successFail");}
+                        else {this.showDialog("Failed", response.data.msge, "successFail");}
                     }
                 }).catch(err => this.showDialog("Failed", `${err}. Please ensure that all fields have valid input`, "successFail"));
             }
@@ -349,28 +370,31 @@ export default {
                                 this.showDialog("Success", response.data.msge, "successFail");
                                 this.hideDialog("createEdit");
                             }
-                            else {this.showDialog("Sorry", response.data.msge, "successFail");}
+                            else {this.showDialog("Failed", response.data.msge, "successFail");}
                         }
                 }).catch(err => this.showDialog("Failed", `${err}. Please ensure that all fields have valid input`, "successFail"));
             }
             // authorize a driver for the selected vehicle
             else if (this.authorizingAVehicle) {
-                for (let i=0; i<this.authorizedDrivers.length; i++) {
-                    this.authorizedDrivers[i].vehicle_id = this.selectedVehicle.id;
-                }
+                let driver_ids = [];
+                for (let i=0; i<this.authorizedDrivers.length; i++) { driver_ids.push(this.authorizedDrivers[i].driver_id); }
+                const authObject = {
+                    driver_ids: driver_ids,
+                    vehicle_id: this.selectedVehicle.id
+                };
                 let url = `authorizations/${parseInt(this.selectedVehicle.id)}`;
                 this.$axios.delete(url).then(response => {
                     if (response.data.ok) {
-                        this.$axios.post("authorizations", this.authorizedDrivers).then((response) => {
+                        this.$axios.post("authorizations", authObject).then((response) => {
                             if (response.status === 200) {
                                 if (response.data.ok) {
                                     this.showDialog("Success", response.data.msge, "successFail");
                                     this.hideDialog("authorize");
                                 } else {
-                                    this.showDialog("Sorry", response.data.msge, "successFail");
+                                    this.showDialog("Failed", response.data.msge, "successFail");
                                 }
                             }
-                        }).catch(err => this.showDialog("Failed", `${err}. Please ensure that all fields have valid input`, "successFail"));
+                        }).catch(err => this.showDialog("Failed", `Something went wrong. ${err}`, "successFail"));
                     }
                     else { this.showDialog("Failed", `Something went wrong`, "successFail") }
                 }).catch(err => this.showDialog("Failed", `${err}. Something went wrong`, "successFail"));
@@ -432,11 +456,6 @@ export default {
         selectState(state_option) {
             this.selectedVehicle.license_state = state_option.key;
             this.selectedVehicle.state = state_option.value;
-        },
-
-        // called whenever the driver dropdown value changes
-        selectDriver(driver_option) {
-            this.selectedDriver.driver_id = driver_option.key;
         }
     }
 };

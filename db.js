@@ -194,31 +194,15 @@ const init = async () => {
 				description: 'Assign a driver to all specified rides',
 			},
 			handler: async (request) => {
-				if (Array.isArray(request.payload)) {
-					for (let i=0; i<request.payload.length; i++) {
-						const object = {
-							driver_id: request.payload[i].driver_id,
-							ride_id: request.payload[i].id
-						};
-						let newAssignedRides = await Drivers.query().insert(object).returning(["driver_id", "ride_id"]);
-						if (!newAssignedRides) { return {ok: false, msge: `Couldn't update selected drives. Failed with payload object ${JSON.stringify(request.payload[i])}`}; }
-					}
-					return {ok: true, msge: `Successfully updated your drive preferences`};
+				for (let i=0; i<request.payload.length; i++) {
+					const object = {
+						driver_id: request.payload[i].driver_id,
+						ride_id: request.payload[i].id
+					};
+					let newAssignedRides = await Drivers.query().insert(object).returning(["driver_id", "ride_id"]);
+					if (!newAssignedRides) { return {ok: false, msge: `Couldn't update selected drives. Failed with payload object ${JSON.stringify(request.payload[i])}`}; }
 				}
-				else {
-					const existingAssignment = await Drivers.query()
-						.where("driver_id", request.payload.driver_id)
-						.where("ride_id", request.payload.ride_id);
-					if (existingAssignment) {
-						return {ok: false, msge: `Driver ${request.payload.driver_id} is already assigned to ride ${request.payload.ride_id}`};
-					}
-					const newAssignedRide = await Drivers.query().insert(request.payload).returning(["driver_id", "ride_id"]);
-					if (newAssignedRide) {
-						return {ok: true, msge: `Assigned driver ${request.payload.driver_id} to ride ${request.payload.ride_id}`};
-					} else {
-						return {ok: false, msge: `Couldn't assign driver to specified ride`};
-					}
-				}
+				return {ok: true, msge: `Successfully updated your drive preferences`};
 			}
 		},
 
@@ -253,33 +237,31 @@ const init = async () => {
 			path: '/authorizations',
 			config: {
 				description: 'Authorize a driver',
+				validate: {
+					payload: Joi.object({
+						vehicle_id: Joi.number().integer().required()
+					}).options({ allowUnknown: true})
+				}
 			},
 			handler: async (request) => {
-				if (Array.isArray(request.payload)) {
-					for (let i=0; i<request.payload.length; i++) {
-						const object = {
-							driver_id: request.payload[i].driver_id,
-							vehicle_id: request.payload[i].vehicle_id,
-						};
-						let newAuth = await Authorization.query().insert(object).returning(["driver_id", "vehicle_id"]);
-						if (!newAuth) { return {ok: false, msge: `Couldn't authorize driver. Failed with payload object ${JSON.stringify(request.payload[i])}`}; }
-					}
-					return {ok: true, msge: `Successfully changed authorization for this vehicle`};
+				for (let i=0; i<request.payload.driver_ids.length; i++) {
+					const object = {
+						driver_id: request.payload.driver_ids[i],
+						vehicle_id: request.payload.vehicle_id,
+					};
+					let newAuth = await Authorization.query().insert(object).returning(["driver_id", "vehicle_id"]);
+					if (!newAuth) { return {ok: false, msge: `Couldn't authorize driver. Failed with payload object ${JSON.stringify(request.payload[i])}`}; }
 				}
-				else {
-					const existingAuth = await Authorization.query()
-						.where("driver_id", request.payload.driver_id)
-						.where("vehicle_id", request.payload.vehicle_id);
-					if (existingAuth) {
-						return {ok: false, msge: `This driver is already authorized to drive this vehicle`};
-					}
-					const newAuth = await Authorization.query().insert(request.payload).returning(["driver_id", "vehicle_id"]);
-					if (newAuth) {
-						return {ok: true, msge: `Authorized driver`};
-					} else {
-						return {ok: false, msge: `Couldn't authorize driver`};
-					}
+				// delete driverRides where the driver is no longer authorized
+				const rides = await Ride.query().where("vehicle_id", request.payload.vehicle_id);
+				for (let i=0; i<rides.length; i++) {
+					let ride_id = rides[i].id;
+					await Drivers.query()
+						.delete()
+						.where("ride_id", ride_id)
+						.whereNotIn("driver_id", request.payload.driver_ids);
 				}
+				return {ok: true, msge: `Successfully changed authorization for this vehicle`};
 			}
 		},
 
@@ -428,6 +410,32 @@ const init = async () => {
 					.update(request.payload);
 				if (updatedVehicle) {return {ok: true, msge: "Vehicle has been updated"};}
 				else {return {ok: false, data: updatedVehicle, msge: "Failed to update vehicle"};}
+			}
+		},
+
+		// delete a specific vehicle and all of its associations
+		{
+			method: 'DELETE',
+			path: '/vehicles/{vehicle_id}',
+			config: {
+				description: 'Remove a vehicle',
+				validate: {
+					params: Joi.object({
+						vehicle_id: Joi.number().integer()
+					})
+				}
+			},
+			handler: async (request) => {
+				await Authorization.query().delete().where("vehicle_id", request.params.vehicle_id);
+				const ridesToDelete = await Ride.query().where("vehicle_id", request.params.vehicle_id);
+				for (let i=0; i<ridesToDelete.length; i++) {
+					let ride_id = ridesToDelete[i].id;
+					await Drivers.query().delete().where("ride_id", ride_id);
+					await Passengers.query().delete().where("ride_id", ride_id);
+				}
+				await Ride.query().delete().where("vehicle_id", request.params.vehicle_id);
+				await Vehicle.query().delete().where("id", request.params.vehicle_id);
+				return {ok: true, msge: `Vehicle (id ${request.params.vehicle_id}) has been deleted`};
 			}
 		},
 
@@ -618,6 +626,26 @@ const init = async () => {
 			}
 		},
 
+		// delete a specific ride and all of its associations
+		{
+			method: 'DELETE',
+			path: '/rides/{ride_id}',
+			config: {
+				description: 'Remove a ride',
+				validate: {
+					params: Joi.object({
+						ride_id: Joi.number().integer()
+					})
+				}
+			},
+			handler: async (request) => {
+				await Drivers.query().delete().where("ride_id", request.params.ride_id);
+				await Passengers.query().delete().where("ride_id", request.params.ride_id);
+				await Ride.query().delete().where("id", request.params.ride_id);
+				return {ok: true, msge: `Ride (id ${request.params.ride_id}) has been deleted`};
+			}
+		},
+
 		// get all passengers
 		{
 			method: 'GET',
@@ -737,31 +765,15 @@ const init = async () => {
 				description: 'Assign a passenger to all specified rides',
 			},
 			handler: async (request) => {
-				if (Array.isArray(request.payload)) {
-					for (let i=0; i<request.payload.length; i++) {
-						const object = {
-							passenger_id: request.payload[i].passenger_id,
-							ride_id: request.payload[i].id
-						};
-						let newAssignedRides = await Passengers.query().insert(object).returning(["passenger_id", "ride_id"]);
-						if (!newAssignedRides) { return {ok: false, msge: `Couldn't update selected rides. Failed with payload object ${JSON.stringify(request.payload[i])}`}; }
-					}
-					return {ok: true, msge: `Successfully updated ride preferences`};
+				for (let i=0; i<request.payload.length; i++) {
+					const object = {
+						passenger_id: request.payload[i].passenger_id,
+						ride_id: request.payload[i].id
+					};
+					let newAssignedRides = await Passengers.query().insert(object).returning(["passenger_id", "ride_id"]);
+					if (!newAssignedRides) { return {ok: false, msge: `Couldn't update selected rides. Failed with payload object ${JSON.stringify(request.payload[i])}`}; }
 				}
-				else {
-					const existingAssignment = await Passengers.query()
-						.where("passenger_id", request.payload.passenger_id)
-						.where("ride_id", request.payload.ride_id);
-					if (existingAssignment) {
-						return {ok: false, msge: `Passenger ${request.payload.passenger_id} is already assigned to ride ${request.payload.ride_id}`};
-					}
-					const newAssignedRide = await Passengers.query().insert(request.payload).returning(["passenger_id", "ride_id"]);
-					if (newAssignedRide) {
-						return {ok: true, msge: `Assigned passenger ${request.payload.passenger_id} to ride ${request.payload.ride_id}`};
-					} else {
-						return {ok: false, msge: `Couldn't assign passenger to specified ride`};
-					}
-				}
+				return {ok: true, msge: `Successfully updated ride preferences`};
 			}
 		},
 

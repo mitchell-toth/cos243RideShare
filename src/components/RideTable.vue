@@ -29,6 +29,9 @@
                     <v-icon color="primary" small class="ml-2" title="Edit" @click="editRide(item)">
                         mdi-pencil
                     </v-icon>
+                    <v-icon color="primary" small class="ml-2" title="Delete" @click="deleteRide(item)">
+                        mdi-delete
+                    </v-icon>
                 </template>
             </v-data-table>
         </v-card>
@@ -231,7 +234,7 @@ export default {
                 { text: "Ride Details", value: "details" },
                 { text: "Action", value: "action" },
             ],
-            rides: [],
+            rides: [],  // all rides in DB
             search: "",
             newRide: { id: "", date: "", time: "", distance: "", vehicle: "", vehicle_id: "",
                 from_location: {
@@ -241,11 +244,11 @@ export default {
                     location_id: "", name: "", address: "", city: "", state: "", zip_code: ""
                 }
             },
-            selectedRide: {},
-            from_location_id: "",
-            to_location_id: "",
-            drivers: [],
-            passengers: [],
+            selectedRide: {},  // the ride associated to the table row of interest
+            from_location_id: "",  // the selectedRide's from_location_id
+            to_location_id: "",  // the selectedRide's to_location_id
+            drivers: [],  // filled when 'showRideDetails()' is called
+            passengers: [],  // filled when 'showRideDetails()' is called
             headers_driversPassengers: [
                 { text: "User ID", value: "user_id" },
                 { text: "First Name", value: "first_name" },
@@ -257,7 +260,7 @@ export default {
             editingARide: false,
             creatingARide: false,
 
-            valid: false,
+            valid: false,  // can 'Save Changes' be clicked?
             rules: {
                 required_string: [val => val !== undefined && val.length > 0 || "Required"],
                 required_number: [
@@ -344,7 +347,7 @@ export default {
         showRideDetails(item) {
             this.drivers = [];
             this.passengers = [];
-            this.$axios.get(`driversRides/${item.id}?join=driver`).then(response => {
+            this.$axios.get(`driversRides/${item.id}&ride_id?join=driver`).then(response => {
                 for (let i=0; i<response.data.length; i++) {
                     let driver = response.data[i].driver;
                     this.drivers.push({
@@ -371,6 +374,23 @@ export default {
             this.showDialog("Ride Details", "", "details");
         },
 
+        deleteRide(item) {
+            if (!confirm(`Are you sure you want to delete ride '${item.from_location.city}, ${item.from_location.state} to ${item.to_location.city}, ${item.to_location.state} scheduled for ${this.getDate(item.date)}, ${item.time}'?`)) {
+                return;
+            }
+            this.$axios.delete(`rides/${item.id}`).then(response => {
+                if (response.data.ok) {
+                    let index = -1;
+                    for (let i=0; i<this.rides.length; i++) {
+                        if (this.rides[i].id === item.id) { index = i; break; }
+                    }
+                    if (index !== -1) { this.rides.splice(index, 1); }
+                    this.showDialog("Success", response.data.msge, "successFail");
+                }
+                else { this.showDialog("Failed", `Something went wrong. ${response.data.msge}`, "successFail"); }
+            }).catch(err => this.showDialog("Failed", `${err}. Something went wrong`, "successFail"));
+        },
+
         // commit changes of a ride to the database
         saveChangesOfRide() {
             // create a new ride
@@ -386,7 +406,7 @@ export default {
                             this.showDialog("Success", response.data.msge, "successFail");
                             this.hideDialog("createEdit");
                         }
-                        else {this.showDialog("Sorry", response.data.msge, "successFail");}
+                        else {this.showDialog("Failed", response.data.msge, "successFail");}
                     }
                 }).catch(err => this.showDialog("Failed", `${err}. Please ensure that all fields have valid input`, "successFail"));
             }
@@ -404,7 +424,7 @@ export default {
                             }
                             this.showDialog("Success", response.data.msge, "successFail");
                             this.hideDialog("createEdit");
-                        } else {this.showDialog("Sorry", response.data.msge, "successFail");}
+                        } else {this.showDialog("Failed", response.data.msge, "successFail");}
                     }
                 }).catch(err => this.showDialog("Failed", `${err}. Please ensure that all fields have valid input`, "successFail"));
             }

@@ -60,8 +60,6 @@
                         <v-card-title primary-title>
                             {{ dialogHeader_signUpForRides }}
                         </v-card-title>
-
-
                         <v-card-text>
                             <v-spacer></v-spacer>
                             <v-text-field
@@ -112,8 +110,6 @@
                                 <v-btn color="primary" text v-on:click="hideDialog('details')">Close</v-btn>
                             </v-card-actions>
                         </v-card-title>
-
-
                         <v-card-text>
                             <h3>Drivers</h3>
                             <v-data-table
@@ -171,13 +167,12 @@ export default {
     components: {PassengerDropdown,Instructions},
     data: function() {
         return {
-            selectedPassenger: {value: "", text: "", first_name: "", last_name: "", phone: "", email: ""},
-            allRegisteredPassengers: {},
-            signedUpRides: [],
-            original_signedUpRides: [],
+            selectedPassenger: {value: -1, text: "", first_name: "", last_name: "", phone: "", email: ""},  // the current passenger selected in the dropdown
+            signedUpRides: [],  // the rides that the selectedPassenger is signed up for
+            original_signedUpRides: [],  // copy of 'signedUpRides' for 'Cancel' button
             search: "",
 
-            rides: [],
+            rides: [],  // all rides in DB
             headers_rides: [
                 { text: `Departure${String.fromCharCode(160)}Date`, value: "date" },
                 { text: "Time", value: "time" },
@@ -188,8 +183,8 @@ export default {
                 { text: "More Details", value: "details" },
             ],
 
-            drivers: [],
-            passengers: [],
+            drivers: [],  // filled when 'showRideDetails()' is called
+            passengers: [],  // filled when 'showRideDetails()' is called
             headers_driversPassengers: [
                 { text: "User ID", value: "user_id" },
                 { text: "First Name", value: "first_name" },
@@ -198,21 +193,24 @@ export default {
                 { text: "Email", value: "email" },
             ],
 
-            // Data to be displayed by the dialog.
+            // 'Find Some Rides' dialog box
             dialogHeader_signUpForRides: "<no dialogHeader>",
             dialogVisible_signUpForRides: false,
 
+            // 'More Details' dialog box
             dialogHeader_details: "<no dialogHeader>",
             dialogVisible_details: false,
 
+            // General success/error dialog box
             dialogHeader_successFail: "<no dialogHeader>",
             dialogText_successFail: "<no dialogText>",
             dialogVisible_successFail: false,
         };
     },
 
-    // on load, fill the ride table with all rides (all upcoming rides depending on value of prop 'typeOfRides')
+    // on load, get all rides and auto-select the first passenger to be 'selectedPassenger'
     mounted: function() {
+        // get all rides
         this.$axios.get("rides?join=fromLocation|toLocation|vehicle&type=upcoming").then(response => {
             // below gives the basic ride object structure
             this.rides = response.data.map(ride => ({
@@ -230,8 +228,9 @@ export default {
                 to_location: `${ride.toLocation.name}, ${ride.toLocation.address}\n${ride.toLocation.city}, ${ride.toLocation.state} ${ride.toLocation.zip_code}`,
             }));
         });
+        // get all passengers and pick the first one
         this.$axios.get("passengers").then(response => {
-            this.allRegisteredPassengers = response.data.map(passenger => ({
+            let allRegisteredPassengers = response.data.map(passenger => ({
                 text: `${passenger.first_name} ${passenger.last_name} (${passenger.email})`,
                 value: passenger.id,
                 first_name: passenger.first_name,
@@ -239,17 +238,21 @@ export default {
                 phone: passenger.phone,
                 email: passenger.email
             }));
-            this.selectedPassenger = this.allRegisteredPassengers[0];
+            if (allRegisteredPassengers.length > 0) {
+                this.selectedPassenger = allRegisteredPassengers[0];
+            }
             this.getPassengerRides(this.selectedPassenger.value);
         });
     },
 
     methods: {
+        // called upon clicking 'Find Some Rides'
         signUpForRides() {
             this.original_signedUpRides = this.signedUpRides;
             this.showDialog("Choose From All Upcoming Rides", "", "signUpForRides");
         },
 
+        // called on mount and whenever the passenger dropdown value changes, gets the rides that 'selectedPassenger' is signed up for
         getPassengerRides(passenger_id) {
             this.signedUpRides = [];
             this.$axios.get(`passengersRides/${passenger_id}&passenger_id`).then(response => {
@@ -267,6 +270,7 @@ export default {
         showRideDetails(item) {
             this.drivers = [];
             this.passengers = [];
+            // get the selected ride's driver(s)
             this.$axios.get(`driversRides/${item.id}&ride_id?join=driver`).then(response => {
                 for (let i=0; i<response.data.length; i++) {
                     let driver = response.data[i].driver;
@@ -279,7 +283,8 @@ export default {
                     });
                 }
             }).catch(err => this.showDialog("Failed", `${err}. Something went wrong`, "successFail"));
-            
+
+            // get the selected ride's passengers
             this.$axios.get(`passengersRides/${item.id}&ride_id?join=passenger`).then(response => {
                 for (let i=0; i<response.data.length; i++) {
                     let passenger = response.data[i].passenger;
@@ -295,12 +300,16 @@ export default {
             this.showDialog("Ride Details", "", "details");
         },
 
+        // Called when 'Save' is pushed. Commits selectedPassenger's ride changes to the DB
         saveChangesOfSignedUpRides() {
+            // delete all existing entries with selectedPassenger's id
             this.$axios.delete(`passengersRides/${this.selectedPassenger.value}`).then(response => {
                 if (response.data.ok) {
+                    // add the selectedPassenger's id to the soon-to-be payload object
                     for (let i=0; i<this.signedUpRides.length; i++) {
                         this.signedUpRides[i].passenger_id = this.selectedPassenger.value;
                     }
+                    // associate all selected rides with the selectedPassenger
                     this.$axios.post("passengersRides", this.signedUpRides).then(response => {
                         if (response.status === 200) {
                             if (response.data.ok) {
@@ -308,7 +317,7 @@ export default {
                                 this.showDialog("Success", response.data.msge, "successFail");
                                 this.hideDialog("signUpForRides");
                             } else {
-                                this.showDialog("Sorry", response.data.msge, "successFail");
+                                this.showDialog("Failed", response.data.msge, "successFail");
                             }
                         }
                     }).catch(err => this.showDialog("Failed", `Something went wrong. ${err}`, "successFail"));
@@ -317,6 +326,7 @@ export default {
             }).catch(err => this.showDialog("Failed", `${err}. Something went wrong`, "successFail"));
         },
 
+        // Called when 'Cancel' is pushed
         cancelChangesOfSignedUpRides() {
             this.signedUpRides = this.original_signedUpRides;
             this.hideDialog("signUpForRides");
@@ -342,15 +352,9 @@ export default {
 
         // hide a dialog box of type 'type'
         hideDialog(type) {
-            if (type === "signUpForRides") {
-                this.dialogVisible_signUpForRides = false;
-            }
-            else if (type === "details") {
-                this.dialogVisible_details = false;
-            }
-            else if (type === "successFail") {
-                this.dialogVisible_successFail = false;
-            }
+            if (type === "signUpForRides") {this.dialogVisible_signUpForRides = false;}
+            else if (type === "details") {this.dialogVisible_details = false;}
+            else if (type === "successFail") {this.dialogVisible_successFail = false;}
             else {console.warn("Unrecognized dialog type parameter passed");}
         },
 

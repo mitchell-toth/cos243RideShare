@@ -60,8 +60,6 @@
                         <v-card-title primary-title>
                             {{ dialogHeader_signUpForDrives }}
                         </v-card-title>
-
-
                         <v-card-text>
                             <v-spacer></v-spacer>
                             <v-text-field
@@ -112,8 +110,6 @@
                                 <v-btn color="primary" text v-on:click="hideDialog('details')">Close</v-btn>
                             </v-card-actions>
                         </v-card-title>
-
-
                         <v-card-text>
                             <h3>Drivers</h3>
                             <v-data-table
@@ -171,14 +167,13 @@ export default {
     components: {DriverDropdown, Instructions},
     data: function() {
         return {
-            selectedDriver: {value: "", text: "", first_name: "", last_name: "", phone: "", email: ""},
-            allRegisteredDrivers: [],
-            driverAuthorizedRides: [],
-            driverUpcomingRides: [],
-            original_driverUpcomingRides: [],
+            selectedDriver: {value: -1, text: "", first_name: "", last_name: "", phone: "", email: ""},  // the current driver selected in the dropdown
+            driverAuthorizedRides: [],  // rides with a vehicle that the selectedDriver is authorized for
+            driverUpcomingRides: [],  // the rides that the selectedDriver is signed up for
+            original_driverUpcomingRides: [],  // copy of 'driverUpcomingRides' for 'Cancel' button
             search: "",
 
-            rides: [],
+            rides: [],  // all rides in DB
             headers_rides: [
                 { text: `Departure${String.fromCharCode(160)}Date`, value: "date" },
                 { text: "Time", value: "time" },
@@ -189,8 +184,8 @@ export default {
                 { text: "More Details", value: "details" },
             ],
 
-            drivers: [],
-            passengers: [],
+            drivers: [],  // filled when 'showRideDetails()' is called
+            passengers: [],  // filled when 'showRideDetails()' is called
             headers_driversPassengers: [
                 { text: "User ID", value: "user_id" },
                 { text: "First Name", value: "first_name" },
@@ -199,21 +194,24 @@ export default {
                 { text: "Email", value: "email" },
             ],
 
-            // Data to be displayed by the dialog.
+            // 'Find Some Drives' dialog box
             dialogHeader_signUpForDrives: "<no dialogHeader>",
             dialogVisible_signUpForDrives: false,
 
+            // 'More Details' dialog box
             dialogHeader_details: "<no dialogHeader>",
             dialogVisible_details: false,
 
+            // General success/error dialog box
             dialogHeader_successFail: "<no dialogHeader>",
             dialogText_successFail: "<no dialogText>",
             dialogVisible_successFail: false,
         };
     },
 
-    // on load
+    // on load, get all rides and auto-select the first driver to be 'selectedDriver'
     mounted: function() {
+        // get all rides
         this.$axios.get("rides?join=fromLocation|toLocation|vehicle&type=upcoming").then(response => {
             // below gives the basic ride object structure
             this.rides = response.data.map(ride => ({
@@ -231,8 +229,9 @@ export default {
                 to_location: `${ride.toLocation.name}, ${ride.toLocation.address}\n${ride.toLocation.city}, ${ride.toLocation.state} ${ride.toLocation.zip_code}`,
             }));
         });
+        // get all drivers and pick the first one
         this.$axios.get("drivers").then(response => {
-            this.allRegisteredDrivers = response.data.map(driver => ({
+            let allRegisteredDrivers = response.data.map(driver => ({
                 text: `${driver.first_name} ${driver.last_name} (${driver.email})`,
                 value: driver.id,
                 first_name: driver.first_name,
@@ -240,33 +239,23 @@ export default {
                 phone: driver.phone,
                 email: driver.email
             }));
-            this.selectedDriver = this.allRegisteredDrivers[0];
+            if (allRegisteredDrivers.length > 0) {
+                this.selectedDriver = allRegisteredDrivers[0];
+            }
             this.getDriverRides(this.selectedDriver.value);
         });
     },
 
     methods: {
+        // called upon clicking 'Find Some Drives'
         signUpForDrives() {
             this.original_driverUpcomingRides = this.driverUpcomingRides;
-            this.createAuthorizedList(this.selectedDriver.value);
             this.showDialog("Choose From All Upcoming Authorized Rides", "", "signUpForDrives");
         },
 
-        createAuthorizedList(driver_id) {
-            this.driverAuthorizedRides = [];
-            this.$axios.get(`authorizations/${driver_id}&driver_id`).then(response => {
-                for (let i=0; i<response.data.length; i++) {
-                    for (let j=0; j<this.rides.length; j++) {
-                        if 
-                        (response.data[i].vehicle_id === this.rides[j].vehicle_id) {
-                            this.driverAuthorizedRides.push(this.rides[j]);
-                        }
-                    }
-                }
-            }).catch(err => this.showDialog("Failed", `${err}. Could not fetch the rides you are authorized for. Please reload the page`, "successFail"));
-        },
-
+        // called on mount and whenever the driver dropdown value changes, gets the rides that 'selectedDriver' is signed up for
         getDriverRides(driver_id) {
+            this.createAuthorizedList(driver_id);
             this.driverUpcomingRides = [];
             this.$axios.get(`driversRides/${driver_id}&driver_id`).then(response => {
                 for (let i=0; i<response.data.length; i++) {
@@ -279,12 +268,64 @@ export default {
             }).catch(err => this.showDialog("Failed", `${err}. Could not fetch your upcoming rides. Please reload the page`, "successFail"));
         },
 
+        // fill 'driverAuthorizedRides' with the rides containing a vehicle that 'selectedDriver' is authorized for
+        createAuthorizedList(driver_id) {
+            this.driverAuthorizedRides = [];
+            this.$axios.get(`authorizations/${driver_id}&driver_id`).then(response => {
+                for (let i=0; i<response.data.length; i++) {
+                    for (let j=0; j<this.rides.length; j++) {
+                        if (response.data[i].vehicle_id === this.rides[j].vehicle_id) {
+                            this.driverAuthorizedRides.push(this.rides[j]);
+                        }
+                    }
+                }
+            }).catch(err => this.showDialog("Failed", `${err}. Could not fetch the rides you are authorized for. Please reload the page`, "successFail"));
+        },
+
+        // when the icon for 'More Details' is clicked, display all passengers and drivers for the given ride
+        showRideDetails(item) {
+            this.drivers = [];
+            this.passengers = [];
+            // get the selected ride's driver(s)
+            this.$axios.get(`driversRides/${item.id}&ride_id?join=driver`).then(response => {
+                for (let i=0; i<response.data.length; i++) {
+                    let driver = response.data[i].driver;
+                    this.drivers.push({
+                        user_id: driver.id,
+                        first_name: driver.first_name,
+                        last_name: driver.last_name,
+                        phone: driver.phone,
+                        email: driver.email,
+                    });
+                }
+            }).catch(err => this.showDialog("Failed", `${err}. Something went wrong`, "successFail"));
+
+            // get the selected ride's passengers
+            this.$axios.get(`passengersRides/${item.id}&ride_id?join=passenger`).then(response => {
+                for (let i=0; i<response.data.length; i++) {
+                    let passenger = response.data[i].passenger;
+                    this.passengers.push({
+                        user_id: passenger.id,
+                        first_name: passenger.first_name,
+                        last_name: passenger.last_name,
+                        phone: passenger.phone,
+                        email: passenger.email,
+                    });
+                }
+            }).catch(err => this.showDialog("Failed", `${err}. Something went wrong`, "successFail"));
+            this.showDialog("Ride Details", "", "details");
+        },
+
+        // Called when 'Save' is pushed. Commits selectedDriver's ride changes to the DB
         saveChangesOfSignedUpRides() {
+            // delete all existing entries with selectedDriver's id
             this.$axios.delete(`driversRides/${this.selectedDriver.value}`).then(response => {
                 if (response.data.ok) {
+                    // add the selectedDriver's id to the soon-to-be payload object
                     for (let i=0; i<this.driverUpcomingRides.length; i++) {
                         this.driverUpcomingRides[i].driver_id = this.selectedDriver.value;
                     }
+                    // associate all selected rides with the selectedDriver
                     this.$axios.post("driversRides", this.driverUpcomingRides).then(response => {
                         if (response.status === 200) {
                             if (response.data.ok) {
@@ -292,7 +333,7 @@ export default {
                                 this.showDialog("Success", response.data.msge, "successFail");
                                 this.hideDialog("signUpForDrives");
                             } else {
-                                this.showDialog("Sorry", response.data.msge, "successFail");
+                                this.showDialog("Failed", response.data.msge, "successFail");
                             }
                         }
                     }).catch(err => this.showDialog("Failed", `Something went wrong. ${err}`, "successFail"));
@@ -301,6 +342,7 @@ export default {
             }).catch(err => this.showDialog("Failed", `Something went wrong. ${err}`, "successFail"));
         },
 
+        // Called when 'Cancel' is pushed
         cancelChangesOfSignedUpRides() {
             this.driverUpcomingRides = this.original_driverUpcomingRides;
             this.hideDialog("signUpForDrives");
@@ -326,48 +368,10 @@ export default {
 
         // hide a dialog box of type 'type'
         hideDialog(type) {
-            if (type === "signUpForDrives") {
-                this.dialogVisible_signUpForDrives = false;
-            }
-            else if (type === "details") {
-                this.dialogVisible_details = false;
-            }
-             else if (type === "successFail") {
-                this.dialogVisible_successFail = false;
-            }
+            if (type === "signUpForDrives") {this.dialogVisible_signUpForDrives = false;}
+            else if (type === "details") {this.dialogVisible_details = false;}
+            else if (type === "successFail") {this.dialogVisible_successFail = false;}
             else {console.warn("Unrecognized dialog type parameter passed");}
-        },
-
-        // when the icon for 'More Details' is clicked, display all passengers and drivers for the given ride
-        showRideDetails(item) {
-            this.drivers = [];
-            this.passengers = [];
-            this.$axios.get(`driversRides/${item.id}&ride_id?join=driver`).then(response => {
-                for (let i=0; i<response.data.length; i++) {
-                    let driver = response.data[i].driver;
-                    this.drivers.push({
-                        user_id: driver.id,
-                        first_name: driver.first_name,
-                        last_name: driver.last_name,
-                        phone: driver.phone,
-                        email: driver.email,
-                    });
-                }
-            }).catch(err => this.showDialog("Failed", `${err}. Something went wrong`, "successFail"));
-
-            this.$axios.get(`passengersRides/${item.id}&ride_id?join=passenger`).then(response => {
-                for (let i=0; i<response.data.length; i++) {
-                    let passenger = response.data[i].passenger;
-                    this.passengers.push({
-                        user_id: passenger.id,
-                        first_name: passenger.first_name,
-                        last_name: passenger.last_name,
-                        phone: passenger.phone,
-                        email: passenger.email,
-                    });
-                }
-            }).catch(err => this.showDialog("Failed", `${err}. Something went wrong`, "successFail"));
-            this.showDialog("Ride Details", "", "details");
         },
 
         // format the dates that come in from the database
