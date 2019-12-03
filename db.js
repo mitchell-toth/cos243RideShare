@@ -135,41 +135,86 @@ const init = async () => {
 			}
 		},
 
-		// get all drivers assigned to drive for a specific ride
+		// get all passengers assigned to a specific ride
 		{
 			method: 'GET',
-			path: '/driversRides/{ride_id}',
+			path: '/passengersRides/{passenger_or_ride_id}&{type}',
 			config: {
-				description: 'Retrieve the drivers assigned to a ride',
+				description: 'Retrieve IDs related to a specified ride/passenger',
 				validate: {
 					params: Joi.object({
-						ride_id: Joi.number().integer().required(),
+						passenger_or_ride_id: Joi.number().integer().required(),
+						type: Joi.string().required()
 					})
 				}
 			},
 			handler: (request) => {
-				let query = Drivers.query()
-					.where('ride_id', request.params['ride_id']);
+				let column = "";
+				if (request.params.type === "passenger_id") {column = "passenger_id";}
+				else if (request.params.type === "ride_id") {column = "ride_id";}
+				else {column = "ride_id";}
+				let query = Passengers.query()
+					.where(column, request.params['passenger_or_ride_id']);
 				query = getAndApplyRelations(request, query);
 				return query;
 			}
 		},
 
-		// get all drivers authorized for a specific vehicle
+		// get all drivers assigned to drive for a specific ride
 		{
 			method: 'GET',
-			path: '/authorizations/{vehicle_id}',
+			path: '/driversRides/{driver_or_ride_id}&{type}',
 			config: {
-				description: 'Retrieve the authorized drivers for a vehicle',
+				description: 'Retrieve the drivers/rides assigned to a ride/driver',
 				validate: {
 					params: Joi.object({
-						vehicle_id: Joi.number().integer().required(),
+						driver_or_ride_id: Joi.number().integer().required(),
+						type: Joi.string().required()
 					})
 				}
 			},
 			handler: (request) => {
+				let column = "";
+				if (request.params.type === "driver_id") {
+					column = "driver_id";
+				}
+				else if (request.params.type === "ride_id") {
+					column = "ride_id";
+				}
+				else {column = "ride_id";}
+				let query = Drivers.query()
+					.where(column, request.params['driver_or_ride_id']);
+				query = getAndApplyRelations(request, query);
+				return query;
+			}
+		},
+
+		// get all drivers/vehicles authorized for a specific vehicle/driver
+		{
+			method: 'GET',
+			path: '/authorizations/{vehicle_or_driver_id}&{type}',
+			config: {
+				description: 'Retrieve the authorized drivers or vehicles for a vehicle/driver',
+				validate: {
+					params: Joi.object({
+						vehicle_or_driver_id: Joi.number().integer().required(),
+						type: Joi.string().required()
+					})
+				}
+			},
+			handler: (request) => {
+				let column = "";
+				if (request.params.type === "vehicle_id") {
+					column = "vehicle_id";
+				}
+				else if (request.params.type === "driver_id") {
+					column = "driver_id";
+				}
+				else {
+					column = "driver_id";
+				}
 				let query = Authorization.query()
-					.where('vehicle_id', request.params['vehicle_id']);
+					.where(column, request.params['vehicle_or_driver_id']);
 				query = getAndApplyRelations(request, query);
 				return query;
 			}
@@ -606,31 +651,6 @@ const init = async () => {
 			}
 		},
 
-		// get all passengers assigned to a specific ride
-		{
-			method: 'GET',
-			path: '/passengersRides/{passenger_or_ride_id}&{type}',
-			config: {
-				description: 'Retrieve IDs related to a specified ride/passenger',
-				validate: {
-					params: Joi.object({
-						passenger_or_ride_id: Joi.number().integer().required(),
-						type: Joi.string().required()
-					})
-				}
-			},
-			handler: (request) => {
-				let column = "";
-				if (request.params.type === "passenger_id") {column = "passenger_id";}
-				else if (request.params.type === "ride_id") {column = "ride_id";}
-				else {column = "ride_id";}
-				let query = Passengers.query()
-					.where(column, request.params['passenger_or_ride_id']);
-				query = getAndApplyRelations(request, query);
-				return query;
-			}
-		},
-
 		// de-assign a passenger from all of his/her rides
 		{
 			method: 'DELETE',
@@ -688,6 +708,68 @@ const init = async () => {
 						return {ok: true, msge: `Assigned passenger ${request.payload.passenger_id} to ride ${request.payload.ride_id}`};
 					} else {
 						return {ok: false, msge: `Couldn't assign passenger to specified ride`};
+					}
+				}
+			}
+		},
+
+		// de-assign a driver from all of his/her rides
+		{
+			method: 'DELETE',
+			path: '/driversRides/{driver_id}',
+			config: {
+				description: 'De-assign a driver from all rides',
+				validate: {
+					params: Joi.object({
+						driver_id: Joi.number().integer().required(),
+					})
+				}
+			},
+			handler: async (request) => {
+				const ridesAssignedToDriver = await Drivers.query()
+					.where("driver_id", request.params.driver_id)
+					.first();
+				if (!ridesAssignedToDriver) {
+					return {ok: true, msge: `No rides to de-assign for driver with ID ${request.params.driver_id}`};
+				}
+				await Drivers.query()
+					.delete()
+					.where("driver_id", request.params.driver_id);
+				return {ok: true, msge: `De-assigned all rides related to driver with ID ${request.params.driver_id}`};
+			}
+		},
+
+		// assign a driver to all specified rides
+		{
+			method: 'POST',
+			path: '/driversRides',
+			config: {
+				description: 'Assign a driver to all specified rides',
+			},
+			handler: async (request) => {
+				if (Array.isArray(request.payload)) {
+					for (let i=0; i<request.payload.length; i++) {
+						const object = {
+							driver_id: request.payload[i].driver_id,
+							ride_id: request.payload[i].id
+						};
+						let newAssignedRides = await Drivers.query().insert(object).returning(["driver_id", "ride_id"]);
+						if (!newAssignedRides) { return {ok: false, msge: `Couldn't update selected rides. Failed with payload object ${JSON.stringify(request.payload[i])}`}; }
+					}
+					return {ok: true, msge: `Successfully updated ride preferences`};
+				}
+				else {
+					const existingAssignment = await Drivers.query()
+						.where("driver_id", request.payload.driver_id)
+						.where("ride_id", request.payload.ride_id);
+					if (existingAssignment) {
+						return {ok: false, msge: `Driver ${request.payload.driver_id} is already assigned to ride ${request.payload.ride_id}`};
+					}
+					const newAssignedRide = await Drivers.query().insert(request.payload).returning(["driver_id", "ride_id"]);
+					if (newAssignedRide) {
+						return {ok: true, msge: `Assigned driver ${request.payload.driver_id} to ride ${request.payload.ride_id}`};
+					} else {
+						return {ok: false, msge: `Couldn't assign driver to specified ride`};
 					}
 				}
 			}

@@ -274,6 +274,7 @@ export default {
                     });
                 }
             }).catch(err => this.showDialog("Failed", `${err}. Something went wrong`, "successFail"));
+            
             this.$axios.get(`passengersRides/${item.id}&ride_id?join=passenger`).then(response => {
                 for (let i=0; i<response.data.length; i++) {
                     let passenger = response.data[i].passenger;

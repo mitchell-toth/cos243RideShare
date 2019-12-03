@@ -286,7 +286,7 @@ export default {
                     phone: driver.phone,
                     email: driver.email,
                 }));
-                let url = `authorizations/${this.selectedVehicle.id}?join=drivers`;
+                let url = `authorizations/${this.selectedVehicle.id}&vehicle_id?join=drivers`;
                 this.$axios.get(url).then(response => {
                     let authorizations = [];
                     for (let i=0; i<response.data.length; i++) {
