@@ -81,7 +81,7 @@
                                     item-key="id"
                                     show-select>
                                 <template slot="no-data">
-                                    <div>There are currently no upcoming authorized rides</div>
+                                    <div>You currently have no upcoming authorized rides!</div>
                                 </template>
                                 <template v-slot:item.details="{ item }">
                                     <v-icon color="primary" small class="ml-2" title="More Details" @click="showRideDetails(item)">
@@ -96,7 +96,7 @@
                         <v-card-actions>
                             <v-spacer></v-spacer>
                             <v-btn color="primary" text v-on:click="cancelChangesOfSignedUpRides">Cancel</v-btn>
-                            <v-btn color="primary" text v-on:click="saveChangesOfSignedUpRides">Save</v-btn>
+                            <v-btn color="primary" v-if="driverAuthorizedRides.length !== 0" text v-on:click="saveChangesOfSignedUpRides">Save</v-btn>
                         </v-card-actions>
                     </v-card>
                 </v-dialog>
@@ -199,7 +199,6 @@ export default {
                 { text: "Email", value: "email" },
             ],
 
-
             // Data to be displayed by the dialog.
             dialogHeader_signUpForDrives: "<no dialogHeader>",
             dialogVisible_signUpForDrives: false,
@@ -248,7 +247,7 @@ export default {
 
     methods: {
         signUpForDrives() {
-            this.copyArray(this.driverUpcomingRides, this.original_driverUpcomingRides);
+            this.original_driverUpcomingRides = this.driverUpcomingRides;
             this.createAuthorizedList(this.selectedDriver.value);
             this.showDialog("Choose From All Upcoming Authorized Rides", "", "signUpForDrives");
         },
@@ -369,12 +368,6 @@ export default {
                 }
             }).catch(err => this.showDialog("Failed", `${err}. Something went wrong`, "successFail"));
             this.showDialog("Ride Details", "", "details");
-        },
-
-        copyArray(source, destination) {
-            for (let i=0; i<source.length; i++) {
-                destination[i] = source[i];
-            }
         },
 
         // format the dates that come in from the database

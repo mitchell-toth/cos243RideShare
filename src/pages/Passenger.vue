@@ -96,7 +96,7 @@
                         <v-card-actions>
                             <v-spacer></v-spacer>
                             <v-btn color="primary" text v-on:click="cancelChangesOfSignedUpRides">Cancel</v-btn>
-                            <v-btn color="primary" text v-on:click="saveChangesOfSignedUpRides">Save</v-btn>
+                            <v-btn color="primary" v-if="rides.length !== 0" text v-on:click="saveChangesOfSignedUpRides">Save</v-btn>
                         </v-card-actions>
                     </v-card>
                 </v-dialog>
@@ -246,7 +246,7 @@ export default {
 
     methods: {
         signUpForRides() {
-            this.copyArray(this.signedUpRides, this.original_signedUpRides);
+            this.original_signedUpRides = this.signedUpRides;
             this.showDialog("Choose From All Upcoming Rides", "", "signUpForRides");
         },
 
@@ -267,7 +267,7 @@ export default {
         showRideDetails(item) {
             this.drivers = [];
             this.passengers = [];
-            this.$axios.get(`driversRides/${item.id}?join=driver`).then(response => {
+            this.$axios.get(`driversRides/${item.id}&ride_id?join=driver`).then(response => {
                 for (let i=0; i<response.data.length; i++) {
                     let driver = response.data[i].driver;
                     this.drivers.push({
@@ -364,12 +364,6 @@ export default {
         capitalize(str) {
             if (typeof str !== 'string') return str;
             return str.charAt(0).toUpperCase() + str.slice(1);
-        },
-
-        copyArray(source, destination) {
-            for (let i=0; i<source.length; i++) {
-                destination[i] = source[i];
-            }
         },
 
         // called whenever the passenger sign-in dropdown value changes
