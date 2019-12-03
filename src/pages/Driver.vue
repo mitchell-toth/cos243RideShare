@@ -2,23 +2,28 @@
     <v-container>
         <div>
             <v-container style="padding-left:0; padding-right:0">
-                <div style="display:inline-block">
-                    <h4 class="display-1">Driver - Drive For Us</h4>
-                    <br>
-                    <instructions details="Sign up to drive for some upcoming rides."></instructions>
-                </div>
-                <div style="display:inline-block; float:right">
-                    <h3>Sign In:</h3>
-                    <v-card width="450" height="70" style="padding:10px" color="primary" raised>
-                        <driver-dropdown
-                            v-bind:selected-driver="selectedDriver.value"
-                            v-on:selectedDriver="selectDriver"
-                        ></driver-dropdown>
-                    </v-card>
-                </div>
+                <v-row>
+                    <v-col>
+                        <div>
+                            <h4 class="display-1">Driver - Drive For Us</h4>
+                            <br>
+                            <instructions details="Sign up to drive for some upcoming rides."></instructions>
+                        </div>
+                    </v-col>
+                    <v-col>
+                        <div style="float:right">
+                            <h3>Sign In:</h3>
+                            <v-card width="450" height="70" style="padding:10px" color="primary" raised>
+                                <driver-dropdown
+                                    v-bind:selected-driver="selectedDriver.value"
+                                    v-on:selectedDriver="selectDriver"
+                                ></driver-dropdown>
+                            </v-card>
+                        </div>
+                    </v-col>
+                </v-row>
             </v-container>
 
-            <br><br>
             <br><br>
 
             <v-card>
@@ -32,14 +37,14 @@
                             hide-details
                     ></v-text-field>
                 </v-card-title>
-                <v-btn color="primary" style="margin-left:8px; margin-bottom: 10px" v-on:click="signUpForDrives" >Sign up for Drives</v-btn>
+                <v-btn color="primary" style="margin-left:8px; margin-bottom: 10px" v-on:click="signUpForDrives" >Find Some Drives</v-btn>
                 <v-data-table
                         class="elevation-1"
                         v-bind:headers="headers_rides"
                         v-bind:items="driverUpcomingRides"
                         v-bind:search="search">
                     <template slot="no-data">
-                        <div>You aren't signed up for any drives!</div>
+                        <div>You aren't signed up to drive for any ride!</div>
                     </template>
                     <template v-slot:item.details="{ item }">
                         <v-icon color="primary" small class="ml-2" title="More Details" @click="showRideDetails(item)">
@@ -162,15 +167,15 @@
 import Instructions from "../components/Instructions.vue";
 import DriverDropdown from "../components/DriverDropdown";
 export default {
-    name: "DriverSignUp",
+    name: "Driver",
     components: {DriverDropdown, Instructions},
     data: function() {
         return {
             selectedDriver: {value: "", text: "", first_name: "", last_name: "", phone: "", email: ""},
             allRegisteredDrivers: [],
-            driverUpcomingRides: [],
-            originalDriverUpcomingRides: [],
             driverAuthorizedRides: [],
+            driverUpcomingRides: [],
+            original_driverUpcomingRides: [],
             search: "",
 
             rides: [],
@@ -210,18 +215,6 @@ export default {
 
     // on load
     mounted: function() {
-        this.$axios.get("drivers").then(response => {
-            this.allRegisteredDrivers = response.data.map(driver => ({
-                text: `${driver.first_name} ${driver.last_name} (${driver.email})`,
-                value: driver.id,
-                first_name: driver.first_name,
-                last_name: driver.last_name,
-                phone: driver.phone,
-                email: driver.email
-            }));
-            this.selectedDriver = this.allRegisteredDrivers[0];
-            this.getDriverRides(this.selectedDriver.value);
-        });
         this.$axios.get("rides?join=fromLocation|toLocation|vehicle&type=upcoming").then(response => {
             // below gives the basic ride object structure
             this.rides = response.data.map(ride => ({
@@ -239,13 +232,25 @@ export default {
                 to_location: `${ride.toLocation.name}, ${ride.toLocation.address}\n${ride.toLocation.city}, ${ride.toLocation.state} ${ride.toLocation.zip_code}`,
             }));
         });
+        this.$axios.get("drivers").then(response => {
+            this.allRegisteredDrivers = response.data.map(driver => ({
+                text: `${driver.first_name} ${driver.last_name} (${driver.email})`,
+                value: driver.id,
+                first_name: driver.first_name,
+                last_name: driver.last_name,
+                phone: driver.phone,
+                email: driver.email
+            }));
+            this.selectedDriver = this.allRegisteredDrivers[0];
+            this.getDriverRides(this.selectedDriver.value);
+        });
     },
 
     methods: {
         signUpForDrives() {
-            this.copyArray(this.driverUpcomingRides, this.originalDriverUpcomingRides);
+            this.copyArray(this.driverUpcomingRides, this.original_driverUpcomingRides);
             this.createAuthorizedList(this.selectedDriver.value);
-            this.showDialog("Choose From All Upcoming Rides", "", "signUpForDrives");
+            this.showDialog("Choose From All Upcoming Authorized Rides", "", "signUpForDrives");
         },
 
         createAuthorizedList(driver_id) {
@@ -256,11 +261,10 @@ export default {
                         if 
                         (response.data[i].vehicle_id === this.rides[j].vehicle_id) {
                             this.driverAuthorizedRides.push(this.rides[j]);
-                            break;
                         }
                     }
                 }
-            }).catch(err => this.showDialog("Failed", `${err}.Could not fetch the rides you are authorized for. Please reload the page`, "successFail"));
+            }).catch(err => this.showDialog("Failed", `${err}. Could not fetch the rides you are authorized for. Please reload the page`, "successFail"));
         },
 
         getDriverRides(driver_id) {
@@ -270,11 +274,10 @@ export default {
                     for (let j=0; j<this.rides.length; j++) {
                         if (response.data[i].ride_id === this.rides[j].id) {
                             this.driverUpcomingRides.push(this.rides[j]);
-                            break;
                         }
                     }
                 }
-            }).catch(err => this.showDialog("Failed", `${err}.Could not fetch your upcoming rides. Please reload the page`, "successFail"));
+            }).catch(err => this.showDialog("Failed", `${err}. Could not fetch your upcoming rides. Please reload the page`, "successFail"));
         },
 
         saveChangesOfSignedUpRides() {
@@ -286,21 +289,21 @@ export default {
                     this.$axios.post("driversRides", this.driverUpcomingRides).then(response => {
                         if (response.status === 200) {
                             if (response.data.ok) {
-                                this.originalDriverUpcomingRides = this.driverUpcomingRides;
+                                this.original_driverUpcomingRides = this.driverUpcomingRides;
                                 this.showDialog("Success", response.data.msge, "successFail");
                                 this.hideDialog("signUpForDrives");
                             } else {
                                 this.showDialog("Sorry", response.data.msge, "successFail");
                             }
                         }
-                    }).catch(err => this.showDialog("Failed", `${err}. Please ensure that all fields have valid input`, "successFail"));
+                    }).catch(err => this.showDialog("Failed", `Something went wrong. ${err}`, "successFail"));
                 }
-                else { this.showDialog("Failed", `Something went wrong`, "successFail") }
-            }).catch(err => this.showDialog("Failed", `${err}. Something went wrong`, "successFail"));
+                else { this.showDialog("Failed", `Something went wrong. ${response.data.msge}`, "successFail") }
+            }).catch(err => this.showDialog("Failed", `Something went wrong. ${err}`, "successFail"));
         },
 
         cancelChangesOfSignedUpRides() {
-            this.driverUpcomingRides = this.originalDriverUpcomingRides;
+            this.driverUpcomingRides = this.original_driverUpcomingRides;
             this.hideDialog("signUpForDrives");
         },
 
@@ -352,6 +355,7 @@ export default {
                     });
                 }
             }).catch(err => this.showDialog("Failed", `${err}. Something went wrong`, "successFail"));
+
             this.$axios.get(`passengersRides/${item.id}&ride_id?join=passenger`).then(response => {
                 for (let i=0; i<response.data.length; i++) {
                     let passenger = response.data[i].passenger;
@@ -366,13 +370,6 @@ export default {
             }).catch(err => this.showDialog("Failed", `${err}. Something went wrong`, "successFail"));
             this.showDialog("Ride Details", "", "details");
         },
-
-        // called whenever the driver sign-in dropdown value changes
-        selectDriver(driver_option) {
-            this.selectedDriver = driver_option;
-            this.getDriverRides(this.selectedDriver.value);
-        },
-
 
         copyArray(source, destination) {
             for (let i=0; i<source.length; i++) {
@@ -392,6 +389,11 @@ export default {
             return str.charAt(0).toUpperCase() + str.slice(1);
         },
 
+        // called whenever the driver sign-in dropdown value changes
+        selectDriver(driver_option) {
+            this.selectedDriver = driver_option;
+            this.getDriverRides(this.selectedDriver.value);
+        }
     }
 };
 </script>

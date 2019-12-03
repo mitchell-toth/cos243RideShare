@@ -2,20 +2,26 @@
     <v-container>
         <div>
             <v-container style="padding-left:0; padding-right:0">
-                <div style="display:inline-block">
-                    <h4 class="display-1">Passenger - Ride With Us</h4>
-                    <br>
-                    <instructions details="Sign up for some rides"></instructions>
-                </div>
-                <div style="display:inline-block; float:right">
-                    <h3>Sign In:</h3>
-                    <v-card width="450" height="70" style="padding:10px" color="primary" raised>
-                        <passenger-dropdown
-                            v-bind:selected-passenger="selectedPassenger.value"
-                            v-on:selectedPassenger="selectPassenger"
-                        ></passenger-dropdown>
-                    </v-card>
-                </div>
+                <v-row>
+                    <v-col>
+                        <div>
+                            <h4 class="display-1">Passenger - Ride With Us</h4>
+                            <br>
+                            <instructions details="Sign up for some rides"></instructions>
+                        </div>
+                    </v-col>
+                    <v-col>
+                        <div style="float:right">
+                            <h3>Sign In:</h3>
+                            <v-card width="450" height="70" style="padding:10px" color="primary" raised>
+                                <passenger-dropdown
+                                    v-bind:selected-passenger="selectedPassenger.value"
+                                    v-on:selectedPassenger="selectPassenger"
+                                ></passenger-dropdown>
+                            </v-card>
+                        </div>
+                    </v-col>
+                </v-row>
             </v-container>
 
             <br><br>
@@ -161,7 +167,7 @@
 import Instructions from "../components/Instructions.vue";
 import PassengerDropdown from "../components/PassengerDropdown.vue";
 export default {
-    name: "DriverSignUp",
+    name: "Passenger",
     components: {PassengerDropdown,Instructions},
     data: function() {
         return {
@@ -251,7 +257,6 @@ export default {
                     for (let j=0; j<this.rides.length; j++) {
                         if (response.data[i].ride_id === this.rides[j].id) {
                             this.signedUpRides.push(this.rides[j]);
-                            break;
                         }
                     }
                 }
@@ -306,9 +311,9 @@ export default {
                                 this.showDialog("Sorry", response.data.msge, "successFail");
                             }
                         }
-                    }).catch(err => this.showDialog("Failed", `${err}. Please ensure that all fields have valid input`, "successFail"));
+                    }).catch(err => this.showDialog("Failed", `Something went wrong. ${err}`, "successFail"));
                 }
-                else { this.showDialog("Failed", `Something went wrong`, "successFail") }
+                else { this.showDialog("Failed", `Something went wrong. ${response.data.msge}`, "successFail") }
             }).catch(err => this.showDialog("Failed", `${err}. Something went wrong`, "successFail"));
         },
 
