@@ -145,34 +145,21 @@
             </v-dialog>
         </div>
 
-        <div class="text-xs-center">
-            <v-dialog v-model="dialogVisible_successFail" width="500">
-                <v-card>
-                    <v-card-title primary-title>
-                        {{ dialogHeader_successFail }}
-                    </v-card-title>
-
-                    <v-card-text>
-                        {{ dialogText_successFail }}
-                    </v-card-text>
-
-                    <v-divider></v-divider>
-
-                    <v-card-actions>
-                        <v-spacer></v-spacer>
-                        <v-btn color="primary" text v-on:click="hideDialog('successFail')">Ok</v-btn>
-                    </v-card-actions>
-                </v-card>
-            </v-dialog>
-        </div>
+        <success-fail-dialog
+                v-bind:dialog-visible_success-fail="dialogVisible_successFail"
+                v-bind:dialog-header_success-fail="dialogHeader_successFail"
+                v-bind:dialog-text_success-fail="dialogText_successFail"
+                v-on:hideDialog="function(type) {hideDialog(type);}"
+        ></success-fail-dialog>
     </div>
 </template>
 
 <script>
 import VehicleTypeDropdown from "./VehicleTypeDropdown";
 import StateDropdown from "./StateDropdown";
+import SuccessFailDialog from "./SuccessFailDialog";
 export default {
-    components: {StateDropdown, VehicleTypeDropdown},
+    components: {StateDropdown, VehicleTypeDropdown, SuccessFailDialog},
     data: function() {
         return {
             headers_vehicles: [

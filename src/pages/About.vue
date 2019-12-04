@@ -28,7 +28,7 @@
             </div>
             <v-card width="85%" style="margin:0 auto 0 auto" raised>
                 <p class="body-1 pa-2" style="margin-left:20px">
-                    The mission of Ride Share Inc. is to hire skilled drivers marked with a passion to offer transportation and convenience to every passenger in need.
+                    The mission of Ride Share Inc. is to hire skilled drivers marked with a passion to offer transportation and convenience to all passengers in need.
                 </p>
             </v-card>
 

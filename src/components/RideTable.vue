@@ -154,63 +154,21 @@
             </v-dialog>
         </div>
 
-        <div class="text-xs-center">
-            <v-dialog v-model="dialogVisible_details" width="1050">
-                <v-card>
-                    <v-card-title primary-title>
-                        {{ dialogHeader_details }}
-                        <v-spacer></v-spacer>
-                        <v-card-actions>
-                            <v-btn color="primary" text v-on:click="hideDialog('details')">Close</v-btn>
-                        </v-card-actions>
-                    </v-card-title>
+        <more-ride-details-dialog
+            v-bind:dialog-visible_details="dialogVisible_details"
+            v-bind:dialog-header_details="dialogHeader_details"
+            v-bind:headers_drivers-passengers="headers_driversPassengers"
+            v-bind:drivers="drivers"
+            v-bind:passengers="passengers"
+            v-on:hideDialog="function(type) {hideDialog(type);}"
+        ></more-ride-details-dialog>
 
-
-                    <v-card-text>
-                        <h3>Drivers</h3>
-                        <v-data-table
-                                class="elevation-1"
-                                v-bind:headers="headers_driversPassengers"
-                                v-bind:items="drivers">
-                            <template slot="no-data">
-                                <div>This ride currently has no driver</div>
-                            </template>
-                        </v-data-table>
-                        <br>
-                        <h3>Passengers</h3>
-                        <v-data-table
-                                class="elevation-1"
-                                v-bind:headers="headers_driversPassengers"
-                                v-bind:items="passengers">
-                            <template slot="no-data">
-                                <div>This ride currently has no passengers</div>
-                            </template>
-                        </v-data-table>
-                    </v-card-text>
-                </v-card>
-            </v-dialog>
-        </div>
-
-        <div class="text-xs-center">
-            <v-dialog v-model="dialogVisible_successFail" width="500">
-                <v-card>
-                    <v-card-title primary-title>
-                        {{ dialogHeader_successFail }}
-                    </v-card-title>
-
-                    <v-card-text>
-                        {{ dialogText_successFail }}
-                    </v-card-text>
-
-                    <v-divider></v-divider>
-
-                    <v-card-actions>
-                        <v-spacer></v-spacer>
-                        <v-btn color="primary" text v-on:click="hideDialog('successFail')">Ok</v-btn>
-                    </v-card-actions>
-                </v-card>
-            </v-dialog>
-        </div>
+        <success-fail-dialog
+            v-bind:dialog-visible_success-fail="dialogVisible_successFail"
+            v-bind:dialog-header_success-fail="dialogHeader_successFail"
+            v-bind:dialog-text_success-fail="dialogText_successFail"
+            v-on:hideDialog="function(type) {hideDialog(type);}"
+        ></success-fail-dialog>
     </div>
 </template>
 
@@ -218,8 +176,10 @@
 import VehicleDropdown from "./VehicleDropdown";
 import LocationDropdown from "./LocationDropdown";
 import StateDropdown from "./StateDropdown";
+import SuccessFailDialog from "./SuccessFailDialog";
+import MoreRideDetailsDialog from "./MoreRideDetailsDialog";
 export default {
-    components: {VehicleDropdown, LocationDropdown, StateDropdown},
+    components: {VehicleDropdown, LocationDropdown, StateDropdown, SuccessFailDialog, MoreRideDetailsDialog},
     props: ["typeOfRides"],
     data: function() {
         return {

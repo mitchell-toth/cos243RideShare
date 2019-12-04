@@ -23,6 +23,7 @@ export default {
         }
     },
     methods: {
+        // changes the ride table's key and thus reloads it, useful if ride information within the DB has changed and needs to be reflected
         reloadRideTable() {
             this.rideTableKey++;
         }
