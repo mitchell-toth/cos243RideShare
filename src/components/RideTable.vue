@@ -160,6 +160,7 @@
             v-bind:headers_drivers-passengers="headers_driversPassengers"
             v-bind:drivers="drivers"
             v-bind:passengers="passengers"
+            v-bind:capacity="selectedRideCapacity"
             v-on:hideDialog="function(type) {hideDialog(type);}"
         ></more-ride-details-dialog>
 
@@ -205,6 +206,7 @@ export default {
                 }
             },
             selectedRide: {},  // the ride associated to the table row of interest
+            selectedRideCapacity: "",
             from_location_id: "",  // the selectedRide's from_location_id
             to_location_id: "",  // the selectedRide's to_location_id
             drivers: [],  // filled when 'showRideDetails()' is called
@@ -263,6 +265,7 @@ export default {
                 fee: ride.fee,
                 vehicle_id: ride.vehicle_id,
                 vehicle: `${ride.vehicle.make} ${ride.vehicle.model} ${ride.vehicle.year} (${this.capitalize(ride.vehicle.color)}) - ${ride.vehicle.license_plate}`,
+                capacity: ride.vehicle.capacity,
                 from_location_id: ride.fromLocation.id,
                 from_location: {
                     display: `${ride.fromLocation.name}, ${ride.fromLocation.address}\n${ride.fromLocation.city}, ${ride.fromLocation.state} ${ride.fromLocation.zip_code}`,
@@ -305,6 +308,7 @@ export default {
 
         // when the icon for 'More Details' is clicked, display all passengers and drivers for the given ride
         showRideDetails(item) {
+            this.selectedRideCapacity = item.capacity;
             this.drivers = [];
             this.passengers = [];
             this.$axios.get(`driversRides/${item.id}&ride_id?join=driver`).then(response => {
@@ -415,15 +419,9 @@ export default {
 
         // hide a dialog box of type 'type'
         hideDialog(type) {
-            if (type === "createEdit") {
-                this.dialogVisible_createEdit = false;
-            }
-            else if (type === "details") {
-                this.dialogVisible_details = false;
-            }
-            else if (type === "successFail") {
-                this.dialogVisible_successFail = false;
-            }
+            if (type === "createEdit") {this.dialogVisible_createEdit = false;}
+            else if (type === "details") {this.dialogVisible_details = false; this.selectedRideCapacity = "";}
+            else if (type === "successFail") {this.dialogVisible_successFail = false;}
             else {console.warn("Unrecognized dialog type parameter passed");}
         },
 

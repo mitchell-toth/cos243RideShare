@@ -106,6 +106,7 @@
                     v-bind:headers_drivers-passengers="headers_driversPassengers"
                     v-bind:drivers="drivers"
                     v-bind:passengers="passengers"
+                    v-bind:capacity="selectedRideCapacity"
                     v-on:hideDialog="function(type) {hideDialog(type);}"
             ></more-ride-details-dialog>
 
@@ -145,6 +146,7 @@ export default {
                 { text: "Distance (miles)", value: "distance" },
                 { text: "More Details", value: "details" },
             ],
+            selectedRideCapacity: "",
 
             drivers: [],  // filled when 'showRideDetails()' is called
             passengers: [],  // filled when 'showRideDetails()' is called
@@ -185,26 +187,27 @@ export default {
                 fee: ride.fee,
                 vehicle_id: ride.vehicle_id,
                 vehicle: `${ride.vehicle.make} ${ride.vehicle.model} ${ride.vehicle.year} (${this.capitalize(ride.vehicle.color)}) - ${ride.vehicle.license_plate}`,
+                capacity: ride.vehicle.capacity,
                 from_location_id: ride.fromLocation.id,
                 from_location: `${ride.fromLocation.name}, ${ride.fromLocation.address}\n${ride.fromLocation.city}, ${ride.fromLocation.state} ${ride.fromLocation.zip_code}`,
                 to_location_id: ride.toLocation.id,
                 to_location: `${ride.toLocation.name}, ${ride.toLocation.address}\n${ride.toLocation.city}, ${ride.toLocation.state} ${ride.toLocation.zip_code}`,
             }));
-        });
-        // get all drivers and pick the first one
-        this.$axios.get("drivers").then(response => {
-            let allRegisteredDrivers = response.data.map(driver => ({
-                text: `${driver.first_name} ${driver.last_name} (${driver.email})`,
-                value: driver.id,
-                first_name: driver.first_name,
-                last_name: driver.last_name,
-                phone: driver.phone,
-                email: driver.email
-            }));
-            if (allRegisteredDrivers.length > 0) {
-                this.selectedDriver = allRegisteredDrivers[0];
-            }
-            this.getDriverRides(this.selectedDriver.value);
+            // get all drivers and pick the first one
+            this.$axios.get("drivers").then(response => {
+                let allRegisteredDrivers = response.data.map(driver => ({
+                    text: `${driver.first_name} ${driver.last_name} (${driver.email})`,
+                    value: driver.id,
+                    first_name: driver.first_name,
+                    last_name: driver.last_name,
+                    phone: driver.phone,
+                    email: driver.email
+                }));
+                if (allRegisteredDrivers.length > 0) {
+                    this.selectedDriver = allRegisteredDrivers[0];
+                }
+                this.getDriverRides(this.selectedDriver.value);
+            });
         });
     },
 
@@ -246,6 +249,7 @@ export default {
 
         // when the icon for 'More Details' is clicked, display all passengers and drivers for the given ride
         showRideDetails(item) {
+            this.selectedRideCapacity = item.capacity;
             this.drivers = [];
             this.passengers = [];
             // get the selected ride's driver(s)
@@ -292,8 +296,21 @@ export default {
                         if (response.status === 200) {
                             if (response.data.ok) {
                                 this.original_driverUpcomingRides = this.driverUpcomingRides;
-                                this.showDialog("Success", response.data.msge, "successFail");
-                                this.hideDialog("signUpForDrives");
+                                const fullRides = response.data.data;
+                                if (fullRides.length > 0) {
+                                    let message = response.data.msge;
+                                    message += ". However, we could not sign you up for ride(s): ";
+                                    for (let i=0; i<fullRides.length; i++) {
+                                        message += `'${fullRides[i].from_location} to ${fullRides[i].to_location} scheduled for ${this.getDate(fullRides[i].date)}, ${fullRides[i].time}'`;
+                                        if (fullRides[i+1]) { message += ", "; }
+                                    }
+                                    message += " because they are full!";
+                                    this.showDialog("Partial Success", message, "successFail");
+                                }
+                                else {
+                                    this.showDialog("Success", response.data.msge, "successFail");
+                                    this.hideDialog("signUpForDrives");
+                                }
                             } else {
                                 this.showDialog("Failed", response.data.msge, "successFail");
                             }
@@ -331,7 +348,7 @@ export default {
         // hide a dialog box of type 'type'
         hideDialog(type) {
             if (type === "signUpForDrives") {this.dialogVisible_signUpForDrives = false;}
-            else if (type === "details") {this.dialogVisible_details = false;}
+            else if (type === "details") {this.dialogVisible_details = false; this.selectedRideCapacity = "";}
             else if (type === "successFail") {this.dialogVisible_successFail = false;}
             else {console.warn("Unrecognized dialog type parameter passed");}
         },

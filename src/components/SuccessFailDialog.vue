@@ -1,6 +1,6 @@
 <template>
     <div class="text-xs-center">
-        <v-dialog v-model="dialogVisible_successFail" width="500">
+        <v-dialog v-model="dialogVisible_successFail" width="500" v-on:click:outside="hideDialog('successFail')">
             <v-card>
                 <v-card-title primary-title>
                     {{ dialogHeader_successFail }}

@@ -194,15 +194,26 @@ const init = async () => {
 				description: 'Assign a driver to all specified rides',
 			},
 			handler: async (request) => {
-				for (let i=0; i<request.payload.length; i++) {
-					const object = {
-						driver_id: request.payload[i].driver_id,
-						ride_id: request.payload[i].id
-					};
-					let newAssignedRides = await Drivers.query().insert(object).returning(["driver_id", "ride_id"]);
-					if (!newAssignedRides) { return {ok: false, msge: `Couldn't update selected drives. Failed with payload object ${JSON.stringify(request.payload[i])}`}; }
-				}
-				return {ok: true, msge: `Successfully updated your drive preferences`};
+                let fullRides = [];
+                for (let i=0; i<request.payload.length; i++) {
+                    let driver_id = request.payload[i].driver_id;
+                    let ride_id = request.payload[i].id;
+                    let capacity = request.payload[i].capacity;
+                    const object = {
+                        driver_id: driver_id,
+                        ride_id: ride_id
+                    };
+                    let passengers = await Passengers.query().where("ride_id", ride_id);
+                    let drivers = await Drivers.query().where("ride_id", ride_id);
+                    if (passengers.length + drivers.length >= capacity) {
+                        fullRides.push(request.payload[i]);
+                    }
+                    else {
+                        let newAssignedRides = await Drivers.query().insert(object).returning(["driver_id", "ride_id"]);
+                        if (!newAssignedRides) { return {ok: false, msge: `Couldn't update selected drives. Failed with payload object ${JSON.stringify(request.payload[i])}`}; }
+                    }
+                }
+				return {ok: true, data: fullRides, msge: `Successfully updated your drive preferences`};
 			}
 		},
 
@@ -765,15 +776,26 @@ const init = async () => {
 				description: 'Assign a passenger to all specified rides',
 			},
 			handler: async (request) => {
-				for (let i=0; i<request.payload.length; i++) {
-					const object = {
-						passenger_id: request.payload[i].passenger_id,
-						ride_id: request.payload[i].id
-					};
-					let newAssignedRides = await Passengers.query().insert(object).returning(["passenger_id", "ride_id"]);
-					if (!newAssignedRides) { return {ok: false, msge: `Couldn't update selected rides. Failed with payload object ${JSON.stringify(request.payload[i])}`}; }
-				}
-				return {ok: true, msge: `Successfully updated ride preferences`};
+                let fullRides = [];
+                for (let i=0; i<request.payload.length; i++) {
+                    let passenger_id = request.payload[i].passenger_id;
+                    let ride_id = request.payload[i].id;
+                    let capacity = request.payload[i].capacity;
+                    const object = {
+                        passenger_id: passenger_id,
+                        ride_id: ride_id
+                    };
+                    let passengers = await Passengers.query().where("ride_id", ride_id);
+                    let drivers = await Drivers.query().where("ride_id", ride_id);
+                    if (passengers.length + drivers.length >= capacity) {
+                        fullRides.push(request.payload[i]);
+                    }
+                    else {
+                        let newAssignedRides = await Passengers.query().insert(object).returning(["passenger_id", "ride_id"]);
+                        if (!newAssignedRides) { return {ok: false, msge: `Couldn't update selected rides. Failed with payload object ${JSON.stringify(request.payload[i])}`}; }
+                    }
+                }
+				return {ok: true, data: fullRides, msge: `Successfully updated ride preferences`};
 			}
 		},
 
