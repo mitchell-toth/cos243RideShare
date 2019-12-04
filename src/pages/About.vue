@@ -17,7 +17,7 @@
                     As fate would have it, the two were randomly introduced by the keynote speaker,
                     and they wasted little time combining their years of experience and inspiration.
                     Through peril and sleepless nights, Mitchell and Drew masterfully manifested their lifelong passion in a mere 3 weeks.
-                    Ride Share Inc. is now a globally competitive and universally accessible application with over 4 test-data users.
+                    Ride Share Inc. is now a globally competitive and universally accessible application with over {{ lowEstimateOfUserCount }} test-data users.
                 </p>
             </v-card>
 
@@ -55,6 +55,7 @@
 export default {
     data: function() {
         return {
+            lowEstimateOfUserCount: 4,  // 4 by default, because why not?
             admins: []  // holds admin objects
         }
     },
@@ -69,6 +70,14 @@ export default {
                 phone: admin.phone,
                 email: admin.email
             }));
+        });
+        // get user count minus 1 (as a joke)
+        this.$axios.get("passengers").then(response => {
+            let passengers = response.data;
+            this.$axios.get("drivers").then(response => {
+                let drivers = response.data;
+                this.lowEstimateOfUserCount = passengers.length + drivers.length - 1;
+            });
         });
     }
 }
