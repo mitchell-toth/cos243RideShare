@@ -9,7 +9,6 @@ create table if not exists driver
 	email varchar not null
 );
 
---alter table driver owner to mitchell_toth;
 
 create table if not exists state
 (
@@ -19,7 +18,6 @@ create table if not exists state
 	name varchar not null
 );
 
---alter table state owner to mitchell_toth;
 
 create table if not exists location
 (
@@ -35,7 +33,6 @@ create table if not exists location
 	zip_code varchar not null
 );
 
---alter table location owner to mitchell_toth;
 
 create table if not exists vehicle_type
 (
@@ -45,7 +42,6 @@ create table if not exists vehicle_type
 	type varchar not null
 );
 
---alter table vehicle_type owner to mitchell_toth;
 
 create table if not exists vehicle
 (
@@ -54,7 +50,7 @@ create table if not exists vehicle
 			primary key,
 	make varchar not null,
 	model varchar not null,
-	color varchar,
+	color varchar not null,
 	vehicle_type_id integer not null
 		constraint vehicle_vehicle_type_id_fk
 			references vehicle_type,
@@ -67,7 +63,6 @@ create table if not exists vehicle
 	year integer not null
 );
 
---alter table vehicle owner to mitchell_toth;
 
 create table if not exists "authorization"
 (
@@ -81,7 +76,6 @@ create table if not exists "authorization"
 		primary key (driver_id, vehicle_id)
 );
 
---alter table "authorization" owner to mitchell_toth;
 
 create table if not exists ride
 (
@@ -104,7 +98,6 @@ create table if not exists ride
 			references location
 );
 
---alter table ride owner to mitchell_toth;
 
 create table if not exists drivers
 (
@@ -118,7 +111,6 @@ create table if not exists drivers
 		primary key (driver_id, ride_id)
 );
 
---alter table drivers owner to mitchell_toth;
 
 create table if not exists passenger
 (
@@ -131,7 +123,6 @@ create table if not exists passenger
 	email varchar not null
 );
 
---alter table passenger owner to mitchell_toth;
 
 create table if not exists passengers
 (
@@ -145,7 +136,6 @@ create table if not exists passengers
 		primary key (passenger_id, ride_id)
 );
 
---alter table passengers owner to mitchell_toth;
 
 create table if not exists admin
 (
@@ -157,12 +147,3 @@ create table if not exists admin
 	phone varchar not null,
 	email varchar not null
 );
-
---alter table admin owner to mitchell_toth;
-
-
-
-
-
-
-
