@@ -28,7 +28,7 @@
 
             <v-card>
                 <v-card-title>
-                    {{ selectedDriver.first_name }}'s Upcoming Drives
+                    {{ firstNameDisplay }} Upcoming Drives
                     <v-spacer></v-spacer>
                     <v-text-field
                             v-model="search"
@@ -37,7 +37,7 @@
                             hide-details
                     ></v-text-field>
                 </v-card-title>
-                <v-btn color="primary" style="margin-left:8px; margin-bottom: 10px" v-on:click="signUpForDrives" >Find Some Drives</v-btn>
+                <v-btn color="primary" style="margin-left:8px; margin-bottom: 10px" v-if="selectedDriver.value !== -1" v-on:click="signUpForDrives" >Find Some Drives</v-btn>
                 <v-data-table
                         class="elevation-1"
                         v-bind:headers="headers_rides"
@@ -131,6 +131,7 @@ export default {
     data: function() {
         return {
             selectedDriver: {value: -1, text: "", first_name: "", last_name: "", phone: "", email: ""},  // the current driver selected in the dropdown
+            firstNameDisplay: "",  // ex: "Tom's" Upcoming Drives
             driverAuthorizedRides: [],  // rides with a vehicle that the selectedDriver is authorized for
             driverUpcomingRides: [],  // the rides that the selectedDriver is signed up for
             original_driverUpcomingRides: [],  // copy of 'driverUpcomingRides' for 'Cancel' button
@@ -220,6 +221,7 @@ export default {
 
         // called on mount and whenever the driver dropdown value changes, gets the rides that 'selectedDriver' is signed up for
         getDriverRides(driver_id) {
+            if (driver_id !== -1) { this.firstNameDisplay = this.selectedDriver.first_name + "'s "; }
             this.createAuthorizedList(driver_id);
             this.driverUpcomingRides = [];
             this.$axios.get(`driversRides/${driver_id}&driver_id`).then(response => {

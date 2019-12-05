@@ -28,7 +28,7 @@
 
             <v-card>
                 <v-card-title>
-                    {{ selectedPassenger.first_name }}'s Upcoming Rides
+                    {{ firstNameDisplay }} Upcoming Rides
                     <v-spacer></v-spacer>
                     <v-text-field
                             v-model="search"
@@ -37,7 +37,7 @@
                             hide-details
                     ></v-text-field>
                 </v-card-title>
-                <v-btn color="primary" style="margin-left:8px; margin-bottom: 10px" v-on:click="signUpForRides" >Find Some Rides</v-btn>
+                <v-btn color="primary" style="margin-left:8px; margin-bottom: 10px" v-if="selectedPassenger.value !== -1" v-on:click="signUpForRides" >Find Some Rides</v-btn>
                 <v-data-table
                         class="elevation-1"
                         v-bind:headers="headers_rides"
@@ -131,6 +131,7 @@ export default {
     data: function() {
         return {
             selectedPassenger: {value: -1, text: "", first_name: "", last_name: "", phone: "", email: ""},  // the current passenger selected in the dropdown
+            firstNameDisplay: "",  // ex: "Tom's" Upcoming Rides
             signedUpRides: [],  // the rides that the selectedPassenger is signed up for
             original_signedUpRides: [],  // copy of 'signedUpRides' for 'Cancel' button
             search: "",
@@ -219,6 +220,7 @@ export default {
 
         // called on mount and whenever the passenger dropdown value changes, gets the rides that 'selectedPassenger' is signed up for
         getPassengerRides(passenger_id) {
+            if (passenger_id !== -1) { this.firstNameDisplay = this.selectedPassenger.first_name + "'s "; }
             this.signedUpRides = [];
             this.$axios.get(`passengersRides/${passenger_id}&passenger_id`).then(response => {
                 for (let i=0; i<response.data.length; i++) {

@@ -268,7 +268,7 @@ export default {
                 capacity: ride.vehicle.capacity,
                 from_location_id: ride.fromLocation.id,
                 from_location: {
-                    display: `${ride.fromLocation.name}, ${ride.fromLocation.address}\n${ride.fromLocation.city}, ${ride.fromLocation.state} ${ride.fromLocation.zip_code}`,
+                    display: `${ride.fromLocation.name}, ${ride.fromLocation.address},\n${ride.fromLocation.city}, ${ride.fromLocation.state} ${ride.fromLocation.zip_code}`,
                     name: ride.fromLocation.name,
                     address: ride.fromLocation.address,
                     city: ride.fromLocation.city,
@@ -277,7 +277,7 @@ export default {
                 },
                 to_location_id: ride.toLocation.id,
                 to_location: {
-                    display: `${ride.toLocation.name}, ${ride.toLocation.address}\n${ride.toLocation.city}, ${ride.toLocation.state} ${ride.toLocation.zip_code}`,
+                    display: `${ride.toLocation.name}, ${ride.toLocation.address},\n${ride.toLocation.city}, ${ride.toLocation.state} ${ride.toLocation.zip_code}`,
                     name: ride.toLocation.name,
                     address: ride.toLocation.address,
                     city: ride.toLocation.city,
@@ -291,7 +291,7 @@ export default {
         // when 'Add a Ride' is clicked
         createRide() {
             this.editingARide = false; this.creatingARide = true;
-            this.selectedRide = this.newRide;
+            this.selectedRide = JSON.parse(JSON.stringify(this.newRide));
             this.selectedRide.date = new Date().toISOString().substr(0,10);
             this.selectedRide.time = "12:00";
             this.from_location_id = this.selectedRide.from_location_id; this.to_location_id = this.selectedRide.to_location_id;
@@ -365,7 +365,9 @@ export default {
                             let newRide = response.data.data;
                             newRide.vehicle = this.selectedRide.vehicle;
                             newRide.from_location = this.selectedRide.from_location;
+                            newRide.from_location.display = `${this.selectedRide.from_location.name}, ${this.selectedRide.from_location.address},\n${this.selectedRide.from_location.city}, ${this.selectedRide.from_location.state} ${this.selectedRide.from_location.zip_code}`;
                             newRide.to_location = this.selectedRide.to_location;
+                            newRide.to_location.display = `${this.selectedRide.to_location.name}, ${this.selectedRide.to_location.address},\n${this.selectedRide.to_location.city}, ${this.selectedRide.to_location.state} ${this.selectedRide.to_location.zip_code}`;
                             this.rides.push(newRide);
                             this.showDialog("Success", response.data.msge, "successFail");
                             this.hideDialog("createEdit");
@@ -455,7 +457,7 @@ export default {
             this.selectedRide.from_location.city = location_option.city;
             this.selectedRide.from_location.state = location_option.state;
             this.selectedRide.from_location.zip_code = location_option.zip_code;
-            this.selectedRide.from_location.display = `${location_option.name}, ${location_option.address}\n${location_option.city}, ${location_option.state} ${location_option.zip_code}`;
+            this.selectedRide.from_location.display = `${location_option.name}, ${location_option.address},\n${location_option.city}, ${location_option.state} ${location_option.zip_code}`;
         },
 
         // called whenever the to location dropdown value changes
@@ -467,7 +469,7 @@ export default {
             this.selectedRide.to_location.city = location_option.city;
             this.selectedRide.to_location.state = location_option.state;
             this.selectedRide.to_location.zip_code = location_option.zip_code;
-            this.selectedRide.to_location.display = `${location_option.name}, ${location_option.address}\n${location_option.city}, ${location_option.state} ${location_option.zip_code}`;
+            this.selectedRide.to_location.display = `${location_option.name}, ${location_option.address},\n${location_option.city}, ${location_option.state} ${location_option.zip_code}`;
         },
 
         // called whenever the from state dropdown value changes

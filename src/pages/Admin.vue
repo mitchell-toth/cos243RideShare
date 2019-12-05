@@ -5,7 +5,7 @@
             <br>
             <ride-table type-of-rides="Upcoming" v-bind:key="rideTableKey"></ride-table>
             <br>
-            <vehicle-table v-on:vehicleDeleted="reloadRideTable"></vehicle-table>
+            <vehicle-table v-on:madeImportantUpdate="reloadRideTable"></vehicle-table>
             <br>
         </div>
     </v-container>
@@ -24,9 +24,7 @@ export default {
     },
     methods: {
         // changes the ride table's key and thus reloads it, useful if ride information within the DB has changed and needs to be reflected
-        reloadRideTable() {
-            this.rideTableKey++;
-        }
+        reloadRideTable() { this.rideTableKey++; }
     }
 };
 </script>

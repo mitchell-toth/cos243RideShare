@@ -10,8 +10,10 @@
                     </v-card-actions>
                 </v-card-title>
                 <v-card-text>
-                    <p style="display:inline-block; margin-right:40px;">Available Spots Left: {{ capacity - (passengers.length + drivers.length) }}</p>
-                    <p style="display:inline-block">Maximum Capacity: {{ capacity }}</p>
+                    <div v-if="capacity">
+                        <p style="display:inline-block; margin-right:40px;">Available Spots Left: {{ capacity - (passengers.length + drivers.length) }}</p>
+                        <p style="display:inline-block">Maximum Capacity: {{ capacity }}</p>
+                    </div>
                     <v-card color="primary">
                         <v-card-title style="color:white">Drivers</v-card-title>
                         <v-data-table

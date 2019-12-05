@@ -88,7 +88,7 @@ const init = async () => {
 				description: 'Retrieve one driver',
 				validate: {
 					params: Joi.object({
-						driver_id: Joi.number().integer().required(),
+						driver_id: Joi.number().integer().min(0).required(),
 					})
 				}
 			},
@@ -143,7 +143,7 @@ const init = async () => {
 				description: 'Retrieve IDs related to a specified ride/driver',
 				validate: {
 					params: Joi.object({
-						driver_or_ride_id: Joi.number().integer().required(),
+						driver_or_ride_id: Joi.number().integer().min(0).required(),
 						type: Joi.string().required()
 					})
 				}
@@ -168,7 +168,7 @@ const init = async () => {
 				description: 'De-assign a driver from all rides',
 				validate: {
 					params: Joi.object({
-						driver_id: Joi.number().integer().required(),
+						driver_id: Joi.number().integer().min(0).required(),
 					})
 				}
 			},
@@ -192,6 +192,15 @@ const init = async () => {
 			path: '/driversRides',
 			config: {
 				description: 'Assign a driver to all specified rides',
+                validate: {
+                    payload: Joi.array().items(
+                        Joi.object({
+                            driver_id: Joi.number().integer().min(0).required(),
+                            id: Joi.number().integer().min(0).required(),
+                            capacity: Joi.number().integer().min(0).required()
+                        }).options({ allowUnknown: true})
+                    )
+                }
 			},
 			handler: async (request) => {
                 let fullRides = [];
@@ -225,7 +234,7 @@ const init = async () => {
 				description: 'Retrieve IDs related to a specified driver/vehicle',
 				validate: {
 					params: Joi.object({
-						vehicle_or_driver_id: Joi.number().integer().required(),
+						vehicle_or_driver_id: Joi.number().integer().min(0).required(),
 						type: Joi.string().required()
 					})
 				}
@@ -250,7 +259,8 @@ const init = async () => {
 				description: 'Authorize a driver',
 				validate: {
 					payload: Joi.object({
-						vehicle_id: Joi.number().integer().required()
+						vehicle_id: Joi.number().integer().min(0).required(),
+                        driver_ids: Joi.array().items(Joi.number().integer().min(0).required())
 					}).options({ allowUnknown: true})
 				}
 			},
@@ -284,7 +294,7 @@ const init = async () => {
 				description: 'De-authorize a driver',
 				validate: {
 					params: Joi.object({
-						vehicle_id: Joi.number().integer().required(),
+						vehicle_id: Joi.number().integer().min(0).required(),
 					})
 				}
 			},
@@ -319,7 +329,14 @@ const init = async () => {
 		{
 			method: 'GET',
 			path: '/vehicles/{vehicle_id}',
-			config: {description: 'Retrieve one vehicle'},
+			config: {
+                description: 'Retrieve one vehicle',
+                validate: {
+                    params: Joi.object({
+                        vehicle_id: Joi.number().integer().min(0).required()
+                    })
+                }
+            },
 			handler: (request) => {
 				let query = Vehicle.query()
 					.where('id', request.params['vehicle_id'])
@@ -343,10 +360,10 @@ const init = async () => {
 						vehicle_type: Joi.string(),
 						year: Joi.number().integer().required(),
 						color: Joi.string().required(),
-						license_state: Joi.string().regex(/\w{2}/).required(),
+						license_state: Joi.string().regex(/^[A-Z]{2}?/).required(),
 						license_plate: Joi.string().required(),
-						capacity: Joi.number().integer().required(),
-						mpg: Joi.number().required(),
+						capacity: Joi.number().integer().min(0).required(),
+						mpg: Joi.number().min(0).required(),
 					}).options({ allowUnknown: true})
 				}
 			},
@@ -387,7 +404,7 @@ const init = async () => {
 				description: 'Update a specified vehicle',
 				validate: {
 					params: Joi.object({
-						vehicle_id: Joi.number().integer()
+						vehicle_id: Joi.number().integer().min(0).required()
 					}),
 					payload: Joi.object({
 						make: Joi.string().required(),
@@ -395,9 +412,9 @@ const init = async () => {
 						color: Joi.string().required(),
 						vehicle_type_id: Joi.number().integer().required(),
 						vehicle_type: Joi.string(),
-						capacity: Joi.number().integer().required(),
-						mpg: Joi.number().required(),
-						license_state: Joi.string().regex(/\w{2}/).required(),
+						capacity: Joi.number().integer().min(0).required(),
+						mpg: Joi.number().min(0).required(),
+						license_state: Joi.string().regex(/^[A-Z]{2}?/).required(),
 						license_plate: Joi.string().required(),
 						year: Joi.number().integer().required()
 					}).options({ allowUnknown: true})
@@ -432,7 +449,7 @@ const init = async () => {
 				description: 'Remove a vehicle',
 				validate: {
 					params: Joi.object({
-						vehicle_id: Joi.number().integer()
+						vehicle_id: Joi.number().integer().min(0).required()
 					})
 				}
 			},
@@ -482,7 +499,14 @@ const init = async () => {
 		{
 			method: 'GET',
 			path: '/rides/{ride_id}',
-			config: {description: 'Retrieve one ride'},
+			config: {
+                description: 'Retrieve one ride',
+                validate: {
+                    params: Joi.object({
+                        ride_id: Joi.number().integer().min(0).required()
+                    })
+                }
+            },
 			handler: (request) => {
 				let query = Ride.query()
 					.where('id', request.params['ride_id'])
@@ -504,8 +528,8 @@ const init = async () => {
 						time: Joi.string().required(),
 						distance: Joi.number().required(),
 						vehicle_id: Joi.number().integer().min(0).required(),
-						from_location_id: Joi.number().required(),
-						to_location_id: Joi.number().required()
+						from_location_id: Joi.number().integer().required(),
+						to_location_id: Joi.number().integer().required()
 					}).options({ allowUnknown: true})
 				}
 			},
@@ -577,8 +601,8 @@ const init = async () => {
 						time: Joi.string().required(),
 						distance: Joi.number().required(),
 						vehicle_id: Joi.number().integer().min(0).required(),
-						from_location_id: Joi.number().required(),
-						to_location_id: Joi.number().required()
+						from_location_id: Joi.number().integer().required(),
+						to_location_id: Joi.number().integer().required()
 					}).options({ allowUnknown: true})
 				}
 			},
@@ -645,7 +669,7 @@ const init = async () => {
 				description: 'Remove a ride',
 				validate: {
 					params: Joi.object({
-						ride_id: Joi.number().integer()
+						ride_id: Joi.number().integer().min(0).required()
 					})
 				}
 			},
@@ -673,7 +697,14 @@ const init = async () => {
 		{
 			method: 'GET',
 			path: '/passengers/{passenger_id}',
-			config: {description: 'Retrieve one passenger'},
+			config: {
+                description: 'Retrieve one passenger',
+                validate: {
+                    params: Joi.object({
+                        passenger_id: Joi.number().integer().min(0).required()
+                    })
+                }
+            },
 			handler: (request) => {
 				let query = Passenger.query()
 					.where('id', request.params['passenger_id'])
@@ -725,7 +756,7 @@ const init = async () => {
 				description: 'Retrieve IDs related to a specified ride/passenger',
 				validate: {
 					params: Joi.object({
-						passenger_or_ride_id: Joi.number().integer().required(),
+						passenger_or_ride_id: Joi.number().integer().min(0).required(),
 						type: Joi.string().required()
 					})
 				}
@@ -750,7 +781,7 @@ const init = async () => {
 				description: 'De-assign a passenger from all rides',
 				validate: {
 					params: Joi.object({
-						passenger_id: Joi.number().integer().required(),
+						passenger_id: Joi.number().integer().min(0).required(),
 					})
 				}
 			},
@@ -774,6 +805,15 @@ const init = async () => {
 			path: '/passengersRides',
 			config: {
 				description: 'Assign a passenger to all specified rides',
+                validate: {
+                    payload: Joi.array().items(
+                        Joi.object({
+                            passenger_id: Joi.number().integer().min(0).required(),
+                            id: Joi.number().integer().min(0).required(),
+                            capacity: Joi.number().integer().min(0).required()
+                        }).options({ allowUnknown: true})
+                    )
+                }
 			},
 			handler: async (request) => {
                 let fullRides = [];
@@ -827,7 +867,14 @@ const init = async () => {
 		{
 			method: 'GET',
 			path: '/locations/{location_id}',
-			config: {description: 'Retrieve one location'},
+			config: {
+                description: 'Retrieve one location',
+                validate: {
+                    params: Joi.object({
+                        location_id: Joi.number().integer().min(0).required()
+                    })
+                }
+            },
 			handler: (request) => {
 				let query = Location.query()
 					.where('id', request.params['location_id'])

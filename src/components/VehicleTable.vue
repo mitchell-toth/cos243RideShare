@@ -139,7 +139,7 @@
                     <v-card-actions>
                         <v-spacer></v-spacer>
                         <v-btn color="primary" text v-on:click="hideDialog('authorize')">Cancel</v-btn>
-                        <v-btn color="primary" text v-on:click="saveChangesOfVehicle">Save</v-btn>
+                        <v-btn color="primary" v-if="drivers.length !== 0" text v-on:click="saveChangesOfVehicle">Save</v-btn>
                     </v-card-actions>
                 </v-card>
             </v-dialog>
@@ -248,7 +248,7 @@ export default {
         // when 'Add a Vehicle' is clicked
         createVehicle() {
             this.creatingAVehicle = true; this.editingAVehicle = false; this.authorizingAVehicle = false;
-            this.selectedVehicle = this.newVehicle;
+            this.selectedVehicle = JSON.parse(JSON.stringify(this.newVehicle));
             this.vehicle_type_id = this.selectedVehicle.vehicle_type_id;
             this.showDialog("Add a Vehicle", "", "createEdit");
         },
@@ -304,7 +304,7 @@ export default {
                     }
                     if (index !== -1) { this.vehicles.splice(index, 1); }
                     this.showDialog("Success", response.data.msge, "successFail");
-                    this.$emit("vehicleDeleted", {});
+                    this.$emit("madeImportantUpdate", {});
                 }
                 else { this.showDialog("Failed", `Something went wrong. ${response.data.msge}`, "successFail"); }
             }).catch(err => this.showDialog("Failed", `${err}. Something went wrong`, "successFail"));
@@ -339,6 +339,7 @@ export default {
                             }
                             this.showDialog("Success", response.data.msge, "successFail");
                             this.hideDialog("createEdit");
+                            this.$emit("madeImportantUpdate", {});
                         }
                         else {this.showDialog("Failed", response.data.msge, "successFail");}
                     }
@@ -356,6 +357,7 @@ export default {
                                 this.vehicles.push(newVehicle);
                                 this.showDialog("Success", response.data.msge, "successFail");
                                 this.hideDialog("createEdit");
+                                this.$emit("madeImportantUpdate", {});
                             }
                             else {this.showDialog("Failed", response.data.msge, "successFail");}
                         }
@@ -436,7 +438,6 @@ export default {
             else {
                 this.selectedVehicle.vehicle_type = vehicle_type_option.value;
             }
-
         },
 
         // called whenever the state dropdown value changes
