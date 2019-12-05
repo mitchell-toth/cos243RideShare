@@ -55,7 +55,7 @@
             </v-card>
 
             <div class="text-xs-center">
-                <v-dialog v-model="dialogVisible_signUpForDrives">
+                <v-dialog v-model="dialogVisible_signUpForDrives" v-on:click:outside="cancelChangesOfSignedUpRides">
                     <v-card>
                         <v-card-title primary-title>
                             {{ dialogHeader_signUpForDrives }}

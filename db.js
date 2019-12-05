@@ -195,9 +195,9 @@ const init = async () => {
                 validate: {
                     payload: Joi.array().items(
                         Joi.object({
-                            driver_id: Joi.number().integer().min(0).required(),
-                            id: Joi.number().integer().min(0).required(),
-                            capacity: Joi.number().integer().min(0).required()
+                            driver_id: Joi.number().integer().min(0),
+                            id: Joi.number().integer().min(0),
+                            capacity: Joi.number().integer().min(0)
                         }).options({ allowUnknown: true})
                     )
                 }
@@ -259,8 +259,8 @@ const init = async () => {
 				description: 'Authorize a driver',
 				validate: {
 					payload: Joi.object({
-						vehicle_id: Joi.number().integer().min(0).required(),
-                        driver_ids: Joi.array().items(Joi.number().integer().min(0).required())
+						vehicle_id: Joi.number().integer().min(0),
+                        driver_ids: Joi.array().items(Joi.number().integer().min(0))
 					}).options({ allowUnknown: true})
 				}
 			},
@@ -488,8 +488,8 @@ const init = async () => {
 				let query = Ride.query()
 					.orderBy([{column: 'date', order: 'asc'}, {column: 'time', order: 'asc'}]);
 				if (request.query.type === "upcoming") {
-					query.where('date', '>', new Date())
-					query.orWhere('date', '=', new Date()).andWhere('time', '>=', `${new Date().getHours()}:${new Date().getMinutes()}`)
+					query.where('date', '>', new Date());
+					query.orWhere('date', '=', new Date()).andWhere('time', '>=', `${new Date().getHours()}:${new Date().getMinutes()}`);
 				}
 				query = getAndApplyRelations(request, query);
 				return query;
@@ -819,9 +819,9 @@ const init = async () => {
                 validate: {
                     payload: Joi.array().items(
                         Joi.object({
-                            passenger_id: Joi.number().integer().min(0).required(),
-                            id: Joi.number().integer().min(0).required(),
-                            capacity: Joi.number().integer().min(0).required()
+                            passenger_id: Joi.number().integer().min(0),
+                            id: Joi.number().integer().min(0),
+                            capacity: Joi.number().integer().min(0)
                         }).options({ allowUnknown: true})
                     )
                 }
