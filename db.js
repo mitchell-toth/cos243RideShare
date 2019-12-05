@@ -655,6 +655,16 @@ const init = async () => {
 				const updatedRide = await Ride.query()
 					.where("id", request.params.ride_id)
 					.update(object);
+
+                // delete driverRides where the driver is no longer authorized
+                const driver_ids = [];
+                const auths = await Authorization.query().where("vehicle_id", request.payload.vehicle_id);
+                for (let i=0; i<auths.length; i++) { driver_ids.push(auths[i].driver_id); }
+                await Drivers.query()
+                    .delete()
+                    .where("ride_id", request.params.ride_id)
+                    .whereNotIn("driver_id", driver_ids);
+
 				if (updatedRide) {
 					return {ok: true, data: updatedRide, msge: `Ride has been updated`};
 				} else {return {ok: false, msge: `Couldn't update ride. Please try again`};}
